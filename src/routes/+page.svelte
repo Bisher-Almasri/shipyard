@@ -26,6 +26,9 @@
 				</p>
 				<button
 					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
+					onclick={() => {
+						window.open("https://shipyard.fillout.com/rsvp", "_blank");
+					}}
 				>
 					RSVP Now!
 				</button>
@@ -198,6 +201,9 @@
 			<h2 class="mb-12 font-marker text-7xl uppercase italic md:text-8xl">READY?</h2>
 			<button
 				class="mb-32 rounded-2xl bg-[#2d7fd5] px-12 py-5 text-4xl font-bold text-white shadow-[0px_6px_0px_0px_#143d5c] transition-all hover:bg-[#3d93ef] active:translate-y-1 active:shadow-none"
+				onclick={() => {
+					window.open("https://shipyard.fillout.com/rsvp", "_blank");
+				}}
 			>
 				RSVP Now!
 			</button>
