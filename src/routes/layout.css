@@ -1,0 +1,12 @@
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Permanent+Marker&family=Gaegu:wght@400;700&display=swap");
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+
+@theme {
+  --font-caveat: "Caveat", cursive; 
+  --font-marker: "Permanent Marker", cursive;
+  --font-gaegu: "Gaegu", cursive;
+}
