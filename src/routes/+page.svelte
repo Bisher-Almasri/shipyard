@@ -21,8 +21,8 @@
 				>
 					Shipyard
 				</h1>
-				<p class="mb-10 text-2xl leading-relaxed font-bold text-black/80 md:text-3xl">
-					Lorem ipsum dolor sit amet,<br />consectetur adipiscing elit.
+				<p class="mb-10 text-2xl leaqding-relaxed font-bold text-black/80 md:text-3xl">
+					Ship 30 days of coding & computing challenges. Earn Prizes.
 				</p>
 				<button
 					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
@@ -77,11 +77,9 @@
 			<div class="mb-32">
 				<h2 class="mb-8 font-marker text-5xl italic md:text-6xl">What is Shipyard?</h2>
 				<p class="mx-auto max-w-4xl text-xl leading-relaxed md:text-2xl">
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,
-					consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,
-					consectetur adipiscing elit.
-				</p>
+					Shipyard is a 30-day coding challenge where a new job arrives every day.
+					Each job requires you to ship a solution to a problem or challenge. A challenge could be a programming puzzle, designing an API that returns x, fixing broken code, or creating something from scratch.
+					In Shipyard, you don't need to ship everything the same day, as jobs stay open for a week. You can submit whenever you have time - but the sooner you ship, the better, since faster submissions earn more points.				</p>
 			</div>
 
 			<div class="mb-20">
@@ -91,10 +89,10 @@
 						<div
 							class="-rotate-1 transform rounded-3xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-all duration-300 hover:rotate-0"
 						>
-							<h3 class="mb-4 font-marker text-3xl">Challenge Arrival</h3>
+							<h3 class="mb-4 font-marker text-3xl">Job Arrival</h3>
 							<p class="text-xl opacity-90">
-								Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-							</p>
+								Every day, a new job is posted in the Shipyard.
+								Each job gives you a challenge - sometimes a puzzle, sometimes a build, sometimes fixing or designing something real.							</p>
 						</div>
 					</div>
 
@@ -113,10 +111,10 @@
 						<div
 							class="rotate-1 transform rounded-3xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-all duration-300 hover:rotate-0"
 						>
-							<h3 class="mb-4 font-marker text-3xl">Create and Submit Solution</h3>
+							<h3 class="mb-4 font-marker text-3xl">Build & Ship</h3>
 							<p class="text-xl opacity-90">
-								Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-							</p>
+								Work on the job and ship your solution when you're ready.
+								Jobs stay open for a week, so you don't need to ship the same day — but faster ships earn more points.							</p>
 						</div>
 					</div>
 
@@ -124,10 +122,10 @@
 						<div
 							class="-rotate-1 transform rounded-3xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-all duration-300 hover:rotate-0"
 						>
-							<h3 class="mb-4 font-marker text-3xl">Spend Your Points</h3>
+							<h3 class="mb-4 font-marker text-3xl">Earn & Spend Points</h3>
 							<p class="text-xl opacity-90">
-								Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-							</p>
+								Shipping jobs earns you Cargo Points.
+								Use your points in the Shipyard shop to unlock rewards, and check the leaderboard to see how you hold up.							</p>
 						</div>
 
 						<div class="absolute -right-10 -bottom-10 flex flex-col gap-2 opacity-40">
@@ -149,32 +147,40 @@
 		</div>
 
 
-		<div class="relative z-10 container mx-auto px-8 pt-20 pb-40">
-			<h2 class="mb-16 text-center font-marker text-5xl uppercase italic md:text-6xl">FAQ</h2>
+	<div class="relative z-10 container mx-auto px-8 pt-20 pb-40">
+	<h2 class="mb-16 text-center font-marker text-5xl uppercase italic md:text-6xl">FAQ</h2>
 
-			<div class="mx-auto mb-8 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
-				<div
-					class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
-				>
-					<h3 class="mb-4 font-marker text-3xl uppercase">LOREM IPSUM</h3>
-					<p class="text-xl opacity-90">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-				</div>
-				<div
-					class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
-				>
-					<h3 class="mb-4 font-marker text-3xl uppercase">LOREM IPSUM</h3>
-					<p class="text-xl opacity-90">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-				</div>
-			</div>
-			<div class="mx-auto max-w-5xl">
-				<div
-					class="rounded-2xl border border-white/20 bg-white/10 p-8 text-center backdrop-blur-md transition-transform hover:scale-[1.01]"
-				>
-					<h3 class="mb-4 font-marker text-3xl uppercase">LOREM IPSUM</h3>
-					<p class="text-xl opacity-90">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-				</div>
-			</div>
+	<div class="mx-auto mb-8 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
+		<div
+			class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
+		>
+			<h3 class="mb-4 font-marker text-3xl uppercase">Who can join?</h3>
+			<p class="text-xl opacity-90">
+				Shipyard is open to all teens, no matter your experience level. Whether you're just starting out or already experienced, there are jobs for you.
+			</p>
 		</div>
+
+		<div
+			class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
+		>
+			<h3 class="mb-4 font-marker text-3xl uppercase">How long do jobs stay open?</h3>
+			<p class="text-xl opacity-90">
+				Each job stays open for a full week after it's posted. You don't need to ship the same day — submit whenever you have time.
+			</p>
+		</div>
+	</div>
+
+	<div class="mx-auto max-w-5xl">
+		<div
+			class="rounded-2xl border border-white/20 bg-white/10 p-8 text-center backdrop-blur-md transition-transform hover:scale-[1.01]"
+		>
+			<h3 class="mb-4 font-marker text-3xl uppercase">How do points work?</h3>
+			<p class="text-xl opacity-90">
+				Shipping a job earns you Cargo Points. Faster submissions earn more points, but later submissions still count — just with fewer points.
+			</p>
+		</div>
+	</div>
+</div>
 
 		<div class="absolute bottom-0 left-0 z-0 w-full leading-none">
 			<svg
