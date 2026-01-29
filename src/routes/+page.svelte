@@ -51,18 +51,28 @@
 				>
 					<path
 						d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28.14,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z"
-						class="fill-[#3498DB]"
+						class="fill-[#3BB1FF]"
 					></path>
 				</svg>
 			</div>
 		</div>
 	</section>
 
-	<div class="relative z-20 w-full bg-[#3498DB]">
+	<div class="relative z-20 w-full bg-[#3BB1FF]">
 		<img src="/BubbleDivider.png" alt="Bubble Divider" class="h-full w-full object-cover" />
 	</div>
 
-	<section class="relative overflow-hidden bg-[#3498DB] px-8 pt-10 pb-10">
+	<section class="relative overflow-hidden px-8 pt-10 pb-10" style="
+    background: linear-gradient(
+      180deg,
+      #3BB1FF 0%,
+      #339AD0 15%,
+      #3070BA 41.83%,
+      #2A68B0 52.41%,
+      #235C9F 71.64%,
+      #1F5390 87.98%
+    );
+  ">
 		<div class="relative z-10 container mx-auto text-center">
 			<div class="mb-32">
 				<h2 class="mb-8 font-marker text-5xl italic md:text-6xl">What is Shipyard?</h2>
@@ -138,23 +148,8 @@
 			</div>
 		</div>
 
-		<div class="absolute bottom-0 left-0 z-0 w-full leading-none">
-			<svg
-				class="relative block h-[150px] w-full"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 1200 120"
-				preserveAspectRatio="none"
-			>
-				<path
-					d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28.14,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V120H0Z"
-					class="fill-[#2980B9]"
-				></path>
-			</svg>
-		</div>
-	</section>
 
-	<section class="relative bg-[#2980B9] px-8 pt-20 pb-40">
-		<div class="relative z-10 container mx-auto">
+		<div class="relative z-10 container mx-auto px-8 pt-20 pb-40">
 			<h2 class="mb-16 text-center font-marker text-5xl uppercase italic md:text-6xl">FAQ</h2>
 
 			<div class="mx-auto mb-8 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
