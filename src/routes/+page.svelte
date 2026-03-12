@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { env } from '$env/dynamic/public';
 </script>
 
 <div
@@ -21,22 +22,33 @@
 				>
 					Shipyard
 				</h1>
-				<p class="mb-10 text-2xl leaqding-relaxed font-bold text-black/80 md:text-3xl">
-					Ship 30 days of coding & computing challenges. Earn Prizes.
+				<p class="leaqding-relaxed mb-10 text-2xl font-bold text-black/80 md:text-3xl">
+					Ship 7 weeks of coding & computing challenges. Earn Prizes.
 				</p>
 				<button
 					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
 					onclick={() => {
-						window.open("https://shipyard.fillout.com/rsvp", "_blank");
+						window.open('https://shipyard.fillout.com/rsvp', '_blank');
 					}}
 				>
 					RSVP Now!
 				</button>
+				<!-- <button
+					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
+					onclick={() => {
+						window.open(
+							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile email name slack_id verification_status`,
+							'_self'
+						);
+					}}
+				>
+					Sign Up!
+				</button> -->
 			</div>
 		</div>
 
 		<div
-			class="ship-sailing pointer-events-none absolute right-[5%] bottom-[10px] z-10 w-[70%] opacity-90 md:right-[10%] md:bottom-[20px] md:w-[40%]"
+			class="ship-sailing pointer-events-none absolute right-[5%] bottom-2.5 z-10 w-[70%] opacity-90 md:right-[10%] md:bottom-5 md:w-[40%]"
 		>
 			<img src="/tall-ship.svg" alt="Tall Ship" class="h-auto w-full drop-shadow-2xl" />
 		</div>
@@ -44,7 +56,7 @@
 		<div class="absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
 			<div class="wave-container">
 				<svg
-					class="wave-anim relative block h-[120px] w-[200%] md:h-[200px]"
+					class="wave-anim relative block h-30 w-[200%] md:h-50"
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 1200 120"
 					preserveAspectRatio="none"
@@ -62,7 +74,9 @@
 		<img src="/BubbleDivider.png" alt="Bubble Divider" class="h-full w-full object-cover" />
 	</div>
 
-	<section class="relative overflow-hidden px-8 pt-10 pb-10" style="
+	<section
+		class="relative overflow-hidden px-8 pt-10 pb-10"
+		style="
     background: linear-gradient(
       180deg,
       #3BB1FF 0%,
@@ -72,14 +86,19 @@
       #235C9F 71.64%,
       #1F5390 87.98%
     );
-  ">
+  "
+	>
 		<div class="relative z-10 container mx-auto text-center">
 			<div class="mb-32">
 				<h2 class="mb-8 font-marker text-5xl italic md:text-6xl">What is Shipyard?</h2>
 				<p class="mx-auto max-w-4xl text-xl leading-relaxed md:text-2xl">
-					Shipyard is a 30-day coding challenge where a new job arrives every day.
-					Each job requires you to ship a solution to a problem or challenge. A challenge could be a programming puzzle, designing an API that returns x, fixing broken code, or creating something from scratch.
-					In Shipyard, you don't need to ship everything the same day, as jobs stay open for a week. You can submit whenever you have time - but the sooner you ship, the better, since faster submissions earn more points.				</p>
+					Shipyard is a 7-week coding challenge where a new job arrives every week. Each job
+					requires you to ship a solution to a problem or challenge. A challenge could be a
+					programming puzzle, designing an API that returns x, fixing broken code, or creating
+					something from scratch. In Shipyard, you don't need to ship everything the same week, as
+					jobs stay open. You can submit whenever you have time - but the sooner you ship, the
+					better, since faster submissions earn more points.
+				</p>
 			</div>
 
 			<div class="mb-20">
@@ -91,8 +110,9 @@
 						>
 							<h3 class="mb-4 font-marker text-3xl">Job Arrival</h3>
 							<p class="text-xl opacity-90">
-								Every day, a new job is posted in the Shipyard.
-								Each job gives you a challenge - sometimes a puzzle, sometimes a build, sometimes fixing or designing something real.							</p>
+								Every week, a new job is posted in the Shipyard. Each job gives you a challenge -
+								sometimes a puzzle, sometimes a build, sometimes fixing or designing something real.
+							</p>
 						</div>
 					</div>
 
@@ -113,8 +133,9 @@
 						>
 							<h3 class="mb-4 font-marker text-3xl">Build & Ship</h3>
 							<p class="text-xl opacity-90">
-								Work on the job and ship your solution when you're ready.
-								Jobs stay open for a week, so you don't need to ship the same day — but faster ships earn more points.							</p>
+								Work on the job and ship your solution when you're ready. Jobs stay open for a week,
+								so you don't need to ship the same day — but faster ships earn more points.
+							</p>
 						</div>
 					</div>
 
@@ -124,8 +145,9 @@
 						>
 							<h3 class="mb-4 font-marker text-3xl">Earn & Spend Points</h3>
 							<p class="text-xl opacity-90">
-								Shipping jobs earns you Cargo Points.
-								Use your points in the Shipyard shop to unlock rewards, and check the leaderboard to see how you hold up.							</p>
+								Shipping jobs earns you Cargo Points. Use your points in the Shipyard shop to unlock
+								rewards, and check the leaderboard to see how you hold up.
+							</p>
 						</div>
 
 						<div class="absolute -right-10 -bottom-10 flex flex-col gap-2 opacity-40">
@@ -146,45 +168,47 @@
 			</div>
 		</div>
 
+		<div class="relative z-10 container mx-auto px-8 pt-20 pb-40">
+			<h2 class="mb-16 text-center font-marker text-5xl uppercase italic md:text-6xl">FAQ</h2>
 
-	<div class="relative z-10 container mx-auto px-8 pt-20 pb-40">
-	<h2 class="mb-16 text-center font-marker text-5xl uppercase italic md:text-6xl">FAQ</h2>
+			<div class="mx-auto mb-8 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
+				<div
+					class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
+				>
+					<h3 class="mb-4 font-marker text-3xl uppercase">Who can join?</h3>
+					<p class="text-xl opacity-90">
+						Shipyard is open to all teens, no matter your experience level. Whether you're just
+						starting out or already experienced, there are jobs for you.
+					</p>
+				</div>
 
-	<div class="mx-auto mb-8 grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
-		<div
-			class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
-		>
-			<h3 class="mb-4 font-marker text-3xl uppercase">Who can join?</h3>
-			<p class="text-xl opacity-90">
-				Shipyard is open to all teens, no matter your experience level. Whether you're just starting out or already experienced, there are jobs for you.
-			</p>
+				<div
+					class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
+				>
+					<h3 class="mb-4 font-marker text-3xl uppercase">How long do jobs stay open?</h3>
+					<p class="text-xl opacity-90">
+						Each job stays open for a full week after it's posted. You don't need to ship the same
+						day — submit whenever you have time.
+					</p>
+				</div>
+			</div>
+
+			<div class="mx-auto max-w-5xl">
+				<div
+					class="rounded-2xl border border-white/20 bg-white/10 p-8 text-center backdrop-blur-md transition-transform hover:scale-[1.01]"
+				>
+					<h3 class="mb-4 font-marker text-3xl uppercase">How do points work?</h3>
+					<p class="text-xl opacity-90">
+						Shipping a job earns you Cargo Points. Faster submissions earn more points, but later
+						submissions still count — just with fewer points.
+					</p>
+				</div>
+			</div>
 		</div>
-
-		<div
-			class="rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md transition-transform hover:scale-[1.02]"
-		>
-			<h3 class="mb-4 font-marker text-3xl uppercase">How long do jobs stay open?</h3>
-			<p class="text-xl opacity-90">
-				Each job stays open for a full week after it's posted. You don't need to ship the same day — submit whenever you have time.
-			</p>
-		</div>
-	</div>
-
-	<div class="mx-auto max-w-5xl">
-		<div
-			class="rounded-2xl border border-white/20 bg-white/10 p-8 text-center backdrop-blur-md transition-transform hover:scale-[1.01]"
-		>
-			<h3 class="mb-4 font-marker text-3xl uppercase">How do points work?</h3>
-			<p class="text-xl opacity-90">
-				Shipping a job earns you Cargo Points. Faster submissions earn more points, but later submissions still count — just with fewer points.
-			</p>
-		</div>
-	</div>
-</div>
 
 		<div class="absolute bottom-0 left-0 z-0 w-full leading-none">
 			<svg
-				class="relative block h-[120px] w-full"
+				class="relative block h-30 w-full"
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 1200 120"
 				preserveAspectRatio="none"
@@ -200,15 +224,25 @@
 	<footer class="relative overflow-hidden bg-[#1A5276] px-8 py-32 text-center">
 		<div class="relative z-10 container mx-auto">
 			<h2 class="mb-12 font-marker text-7xl uppercase italic md:text-8xl">READY?</h2>
+			<!-- <button
+				class="mb-32 rounded-2xl bg-[#2d7fd5] px-12 py-5 text-4xl font-bold text-white shadow-[0px_6px_0px_0px_#143d5c] transition-all hover:bg-[#3d93ef] active:translate-y-1 active:shadow-none"
+				onclick={() => {
+						window.open(
+							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile email name slack_id verification_status`,
+							'_self'
+						);
+					}}
+			>
+				Sign up!
+			</button> -->
 			<button
 				class="mb-32 rounded-2xl bg-[#2d7fd5] px-12 py-5 text-4xl font-bold text-white shadow-[0px_6px_0px_0px_#143d5c] transition-all hover:bg-[#3d93ef] active:translate-y-1 active:shadow-none"
 				onclick={() => {
-					window.open("https://shipyard.fillout.com/rsvp", "_blank");
+					window.open('https://shipyard.fillout.com/rsvp', '_blank');
 				}}
 			>
 				RSVP Now!
 			</button>
-
 			<div class="mt-20 flex flex-col items-center gap-4">
 				<div class="flex items-center gap-4 text-xl font-bold opacity-80 md:text-2xl">
 					<span>Shipyard is from</span>
