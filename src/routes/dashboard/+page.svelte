@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Star, LayoutGrid, ShoppingCart } from 'lucide-svelte';
+	import { Star, LayoutGrid, ShoppingCart, Clock } from 'lucide-svelte';
 
 	const { data } = $props();
 </script>
@@ -21,7 +21,7 @@
 	</p>
 </div>
 
-<div class="mb-10 grid grid-cols-3 gap-4 max-md:grid-cols-1 max-md:gap-3">
+<div class="mb-10 grid grid-cols-4 gap-4 max-md:grid-cols-1 max-md:gap-3">
 	<div
 		class="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/15 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/20 max-md:p-4"
 	>
@@ -59,6 +59,23 @@
 		<div class="flex flex-col">
 			<span class="text-3xl leading-tight font-bold text-white">{data.stats.itemsRedeemed}</span>
 			<span class="text-sm font-semibold text-white">Items Redeemed</span>
+		</div>
+	</div>
+	<div
+		class="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/15 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/20 max-md:p-4"
+	>
+		<div
+			class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white"
+		>
+			<Clock size={24} />
+		</div>
+		<div class="flex flex-col">
+			<span class="text-3xl leading-tight font-bold text-white">
+				{data.hackatime?.hours ?? '0.0'}h
+			</span>
+			<span class="text-sm font-semibold text-white">
+				Coding Time (7d) • {data.hackatime?.streak ?? 0}d streak
+			</span>
 		</div>
 	</div>
 </div>

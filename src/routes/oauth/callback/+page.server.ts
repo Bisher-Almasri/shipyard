@@ -137,7 +137,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 			maxAge: 30 * 24 * 60 * 60
 		});
 
-		throw redirect(302, '/dashboard');
+		throw redirect(302, '/dashboard/hackatime/connect');
 	} catch (e: any) {
 		if (e?.status === 302) {
 			throw e;

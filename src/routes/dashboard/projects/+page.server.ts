@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { supabase } from '$lib/supabaseClient';
 import { fail } from '@sveltejs/kit';
+import { getHackatimeProjects, type HackatimeProject } from '$lib/server/hackatime';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user!;
@@ -16,11 +17,41 @@ export const load: PageServerLoad = async ({ locals }) => {
 		? await supabase.from('posts').select('id, project_id').in('project_id', projectIds)
 		: { data: [] };
 
+	const { data: connection } = await supabase
+		.from('hackatime_connections')
+		.select('access_token')
+		.eq('user_id', user.id)
+		.single();
+
+	let hackatimeProjects: HackatimeProject[] = [];
+	if (connection) {
+		try {
+			const allProjects = await getHackatimeProjects(connection.access_token);
+			const cutoffDate = new Date('2026-03-20T00:00:00Z');
+
+			hackatimeProjects = allProjects
+				.filter((hp) => {
+					if (!hp.most_recent_heartbeat) return false;
+					return new Date(hp.most_recent_heartbeat) >= cutoffDate;
+				})
+				.sort(
+					(a, b) =>
+						new Date(b.most_recent_heartbeat).getTime() -
+						new Date(a.most_recent_heartbeat).getTime()
+				);
+		} catch (e) {
+			console.error('Failed to fetch hackatime projects:', e);
+		}
+	}
+
 	return {
 		projects: projects || [],
-		posts: posts || []
+		posts: posts || [],
+		hackatimeProjects
 	};
 };
+
+import { uploadImage } from '$lib/server/cdn';
 
 export const actions: Actions = {
 	createProject: async ({ request, locals }) => {
@@ -29,17 +60,32 @@ export const actions: Actions = {
 
 		const title = (form.get('title') as string)?.trim();
 		const description = (form.get('description') as string)?.trim();
-		const header_img = (form.get('header_img') as string)?.trim() || null;
+		let header_img = (form.get('header_img') as string)?.trim() || null;
+		const imageFile = form.get('image') as File;
+		const selectedHackatime = form.getAll('hackatime_projects') as string[];
 
 		if (!title || !description) {
 			return fail(400, { error: 'Title and description are required.' });
+		}
+
+		if (selectedHackatime.length === 0) {
+			return fail(400, { error: 'You must link at least one Hackatime project.' });
+		}
+
+		if (imageFile && imageFile.size > 0) {
+			try {
+				header_img = await uploadImage(imageFile);
+			} catch (err: any) {
+				return fail(400, { error: err.message || 'Image upload failed' });
+			}
 		}
 
 		const { error } = await supabase.from('projects').insert({
 			title,
 			description,
 			header_img,
-			user_id: user.id
+			user_id: user.id,
+			hackatime_projects: selectedHackatime
 		});
 
 		if (error) {

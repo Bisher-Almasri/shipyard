@@ -1,10 +1,20 @@
 <script lang="ts">
-	import { LayoutGrid, Plus, BookOpen, Clock, X } from 'lucide-svelte';
+	import { LayoutGrid, Plus, BookOpen, Clock, X, Upload } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
 
 	const { data } = $props();
 
 	let showNewProjectModal = $state(false);
+	let fileName = $state('');
+	let headerImgUrl = $state('');
+
+	function handleFileChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (target.files && target.files.length > 0) {
+			fileName = target.files[0].name;
+			headerImgUrl = '';
+		}
+	}
 
 	function formatDate(dateStr: string) {
 		return new Date(dateStr).toLocaleDateString('en-US', {
@@ -125,8 +135,11 @@
 					return ({ update }) => {
 						update({ reset: true });
 						showNewProjectModal = false;
+						fileName = '';
+						headerImgUrl = '';
 					};
 				}}
+				enctype="multipart/form-data"
 				class="flex flex-col gap-4"
 			>
 				<div>
@@ -156,16 +169,56 @@
 					></textarea>
 				</div>
 				<div>
-					<label for="proj-img" class="mb-1.5 block text-sm font-bold text-white/75">
-						Header Image URL <span class="text-xs font-normal text-white/35">(optional)</span>
+					<label for="hackatime-select" class="mb-1.5 block text-sm font-bold text-white/75">
+						Link Hackatime Projects <span class="text-red-300">*</span>
 					</label>
-					<input
-						id="proj-img"
-						name="header_img"
-						type="url"
-						placeholder="https://…"
-						class="field-input"
-					/>
+					<select
+						id="hackatime-select"
+						name="hackatime_projects"
+						multiple
+						required
+						class="field-input h-32 px-2 py-1"
+					>
+						{#each data.hackatimeProjects as hproject}
+							<option value={hproject.name} class="rounded-lg px-2 py-1.5 font-semibold hover:bg-white/10">
+								{hproject.name}
+							</option>
+						{:else}
+							<option disabled>No projects found since March 20th</option>
+						{/each}
+					</select>
+					<p class="mt-2 text-[10px] font-medium uppercase tracking-wider text-white/30">
+						Hold Cmd (Mac) or Ctrl (Windows) to select multiple
+					</p>
+				</div>
+				<div>
+					<label for="proj-img" class="mb-1.5 block text-sm font-bold text-white/75">
+						Header Image <span class="text-xs font-normal text-white/35">(optional)</span>
+					</label>
+					<div class="attachment-group">
+						<input
+							id="proj-img"
+							name="header_img"
+							type="url"
+							placeholder="Paste an image URL…"
+							class="field-input rounded-b-none border-b-0"
+							bind:value={headerImgUrl}
+						/>
+						<div class="file-upload-zone">
+							<input
+								id="proj-image"
+								name="image"
+								type="file"
+								accept="image/*"
+								class="hidden"
+								onchange={handleFileChange}
+							/>
+							<label for="proj-image" class="file-upload-label">
+								<Upload size={14} />
+								<span>{fileName || 'Or Upload File'}</span>
+							</label>
+						</div>
+					</div>
 				</div>
 				<div class="mt-2 flex gap-3">
 					<button
@@ -208,6 +261,50 @@
 	.field-input:focus {
 		border-color: rgba(184, 228, 255, 0.55);
 		background: rgba(255, 255, 255, 0.14);
+	}
+
+	.attachment-group {
+		display: flex;
+		flex-direction: column;
+		border-radius: 14px;
+		overflow: hidden;
+		border: 1.5px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.attachment-group .field-input {
+		border: none;
+		border-radius: 0;
+	}
+
+	.file-upload-zone {
+		background: rgba(255, 255, 255, 0.05);
+		border-top: 1px dashed rgba(255, 255, 255, 0.2);
+		transition: background 0.15s;
+	}
+
+	.file-upload-zone:hover {
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	.file-upload-label {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		cursor: pointer;
+		font-size: 0.8rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.6);
+		transition: color 0.15s;
+	}
+
+	.file-upload-label:hover {
+		color: white;
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	.modal-slide-in {

@@ -19,6 +19,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	return { project };
 };
 
+import { uploadImage } from '$lib/server/cdn';
+
 export const actions: Actions = {
 	default: async ({ request, locals, params }) => {
 		const user = locals.user!;
@@ -26,10 +28,22 @@ export const actions: Actions = {
 
 		const title = (form.get('title') as string)?.trim();
 		const description = (form.get('description') as string)?.trim();
-		const attachment = (form.get('attachment') as string)?.trim() || '';
+		let attachment = (form.get('attachment') as string)?.trim() || '';
+		const imageFile = form.get('image') as File;
 
 		if (!title || !description) {
 			return fail(400, { error: 'Title and description are required.' });
+		}
+
+		if (imageFile && imageFile.size > 0) {
+			try {
+				attachment = await uploadImage(imageFile);
+			} catch (err: any) {
+				return fail(400, { error: err.message || 'Image upload failed' });
+			}
+		}
+
+		if (!attachment && !description) {
 		}
 
 		const { data: project } = await supabase

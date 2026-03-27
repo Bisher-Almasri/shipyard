@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, Clock, Star, MessageSquare, ArrowLeft, Plus, Pencil } from 'lucide-svelte';
+	import { BookOpen, Clock, Star, MessageSquare, ArrowLeft, Plus, Pencil, LayoutGrid } from 'lucide-svelte';
 
 	const { data } = $props();
 
@@ -66,6 +66,16 @@
 						{formatDate(data.project.created_at)}
 					</span>
 				</div>
+				{#if data.project.hackatime_projects?.length > 0}
+					<div class="mt-3 flex flex-wrap gap-2">
+						{#each data.project.hackatime_projects as hp}
+							<div class="hackatime-tag">
+								<LayoutGrid size={11} />
+								<span>{hp}</span>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
 
 			<div class="flex shrink-0 items-center gap-2">
@@ -264,6 +274,20 @@
 		font-size: 0.8rem;
 		font-weight: 700;
 		color: rgba(255, 255, 255, 0.7);
+	}
+	.hackatime-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.25rem 0.6rem;
+		border-radius: 8px;
+		background: rgba(184, 228, 255, 0.15);
+		border: 1px solid rgba(184, 228, 255, 0.25);
+		color: #b8e4ff;
+		font-size: 0.7rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
 	}
 
 	/* Edit button — square glass pill */

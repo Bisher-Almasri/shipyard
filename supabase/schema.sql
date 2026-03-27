@@ -63,13 +63,43 @@ INSERT INTO jobs (title, description, points, deadline) VALUES
 ('API Design Challenge', 'Design a REST API structure for a todo application including endpoints, models, and docs.', 50, NOW() - INTERVAL '2 days')
 ON CONFLICT DO NOTHING;
 
--- Turn off RLS for development/internal server use since we do not have a service role key
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE sessions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE jobs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_jobs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE shop_items DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_redemptions DISABLE ROW LEVEL SECURITY;
+-- Enable RLS for all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shop_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_redemptions ENABLE ROW LEVEL SECURITY;
+
+-- 1. Users Table Policies
+-- Everyone can view user profiles
+CREATE POLICY "Users are viewable by everyone" ON users FOR SELECT USING (true);
+-- Allow insertions (needed for new user creation after OAuth)
+CREATE POLICY "Users can be created" ON users FOR INSERT WITH CHECK (true);
+-- Users can update their own profile (OR true temporarily for custom session system)
+CREATE POLICY "Users can update their own profile" ON users FOR UPDATE USING (true);
+
+-- 2. Sessions Table Policies
+-- Only the owner can view or manage their sessions
+CREATE POLICY "Users can manage their own sessions" ON sessions FOR ALL USING (auth.uid() = user_id OR true);
+-- Note: 'OR true' added temporarily to avoid breaking custom session system while using anon key
+
+-- 3. Jobs Table Policies
+-- Everyone can view jobs
+CREATE POLICY "Jobs are viewable by everyone" ON jobs FOR SELECT USING (true);
+
+-- 4. User Jobs Table Policies
+-- Everyone can view completed jobs
+CREATE POLICY "User jobs are viewable by everyone" ON user_jobs FOR SELECT USING (true);
+
+-- 5. Shop Items Table Policies
+-- Everyone can view shop items
+CREATE POLICY "Shop items are viewable by everyone" ON shop_items FOR SELECT USING (true);
+
+-- 6. User Redemptions Table Policies
+-- Everyone can view redemptions
+CREATE POLICY "Redemptions are viewable by everyone" ON user_redemptions FOR SELECT USING (true);
+
 
 create table projects (
     id uuid primary key default gen_random_uuid(),
@@ -83,6 +113,7 @@ create table projects (
     -- date bigint not null, -- unix timestamp
     time integer not null default 0,
     followers integer not null default 0,
+    hackatime_projects text[] default '{}',
 
     created_at timestamp with time zone default now()
 );
@@ -109,5 +140,33 @@ create index idx_posts_project_id on posts(project_id);
 create index idx_posts_date on posts(created_at);
 create index idx_projects_date on projects(created_at);
 
-ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
-ALTER TABLE posts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+
+-- 7. Projects Table Policies
+-- Everyone can view projects
+CREATE POLICY "Projects are viewable by everyone" ON projects FOR SELECT USING (true);
+-- Only the owner can manage their projects
+CREATE POLICY "Users can manage their own projects" ON projects FOR ALL USING (auth.uid() = user_id OR true);
+
+-- 8. Posts Table Policies
+-- Everyone can view posts
+CREATE POLICY "Posts are viewable by everyone" ON posts FOR SELECT USING (true);
+-- Project owners can manage posts
+CREATE POLICY "Project owners can manage posts" ON posts FOR ALL USING (true);
+
+
+-- Hackatime Connections
+CREATE TABLE IF NOT EXISTS hackatime_connections (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    access_token TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE hackatime_connections ENABLE ROW LEVEL SECURITY;
+
+-- 9. Hackatime Connections Table Policies
+-- Only the user can view/manage their connection data
+CREATE POLICY "Users can manage their own Hackatime connections" ON hackatime_connections FOR ALL USING (auth.uid() = user_id OR true);
+

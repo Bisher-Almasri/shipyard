@@ -1,8 +1,19 @@
 <script lang="ts">
-	import { ArrowLeft, FileText, Image as ImageIcon } from 'lucide-svelte';
+	import { ArrowLeft, FileText, Image as ImageIcon, Upload } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
 
 	const { data } = $props();
+
+	let fileName = $state('');
+	let attachmentUrl = $state('');
+
+	function handleFileChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (target.files && target.files.length > 0) {
+			fileName = target.files[0].name;
+			attachmentUrl = ''; 
+		}
+	}
 </script>
 
 <svelte:head>
@@ -26,7 +37,7 @@
 </div>
 
 <div class="mx-auto max-w-xl rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-	<form method="POST" use:enhance class="flex flex-col gap-5">
+	<form method="POST" use:enhance enctype="multipart/form-data" class="flex flex-col gap-5">
 		<div>
 			<label for="post-title" class="mb-1.5 block text-sm font-bold text-white/75">
 				Entry Title <span class="text-red-300">*</span>
@@ -37,7 +48,7 @@
 				type="text"
 				required
 				placeholder="e.g. Added authentication flow"
-				class="field-input"
+				class="field-input rounded-[14px]"
 			/>
 		</div>
 
@@ -52,7 +63,7 @@
 				required
 				rows={6}
 				placeholder="Write a few sentences about what you worked on..."
-				class="field-input rounded-tl-none"
+				class="field-input rounded-tl-none rounded-[14px]"
 			></textarea>
 		</div>
 
@@ -61,13 +72,30 @@
 				<ImageIcon size={13} />
 				<span>Attachment</span>
 			</div>
-			<input
-				id="post-attach"
-				name="attachment"
-				type="url"
-				placeholder="Paste a screenshot, demo, or video URL…"
-				class="field-input rounded-tl-none"
-			/>
+			<div class="attachment-group">
+				<input
+					id="post-attach"
+					name="attachment"
+					type="url"
+					placeholder="Paste a screenshot, demo, or video URL…"
+					class="field-input"
+					bind:value={attachmentUrl}
+				/>
+				<div class="file-upload-zone">
+					<input
+						id="post-image"
+						name="image"
+						type="file"
+						accept="image/*"
+						class="hidden"
+						onchange={handleFileChange}
+					/>
+					<label for="post-image" class="file-upload-label">
+						<Upload size={14} />
+						<span>{fileName || 'Or Upload Image Instead'}</span>
+					</label>
+				</div>
+			</div>
 			<p class="mt-2 text-xs leading-snug text-white/35">
 				Show your project's output — screenshots, demo links, videos, etc. Screenshots of just a
 				code editor won't be accepted.
@@ -97,7 +125,6 @@
 		width: 100%;
 		background: rgba(255, 255, 255, 0.1);
 		border: 1.5px solid rgba(255, 255, 255, 0.2);
-		border-radius: 14px;
 		padding: 0.7rem 1rem;
 		color: white;
 		font-family: inherit;
@@ -137,5 +164,49 @@
 		background: rgba(103, 232, 249, 0.15);
 		border-color: rgba(103, 232, 249, 0.3);
 		color: #a5f3fc;
+	}
+
+	.attachment-group {
+		display: flex;
+		flex-direction: column;
+		border-radius: 0 14px 14px 14px;
+		overflow: hidden;
+		border: 1.5px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.attachment-group .field-input {
+		border: none;
+		border-radius: 0;
+	}
+
+	.file-upload-zone {
+		background: rgba(255, 255, 255, 0.05);
+		border-top: 1px dashed rgba(255, 255, 255, 0.2);
+		transition: background 0.15s;
+	}
+
+	.file-upload-zone:hover {
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	.file-upload-label {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		cursor: pointer;
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.6);
+		transition: color 0.15s;
+	}
+
+	.file-upload-label:hover {
+		color: white;
+	}
+
+	.hidden {
+		display: none;
 	}
 </style>

@@ -14,7 +14,7 @@
 </script>
 
 <div
-	class="flex min-h-screen items-center justify-center p-4 font-gaegu"
+	class="flex min-h-screen w-full items-center justify-center p-4 font-gaegu"
 	style="
     background: linear-gradient(
       180deg,
@@ -25,6 +25,7 @@
       #235C9F 71.64%,
       #1F5390 87.98%
     );
+    background-attachment: fixed;
   "
 >
 	<div class="pointer-events-none absolute inset-0 overflow-hidden">
@@ -98,9 +99,9 @@
 			</a>
 		</aside>
 
-		<main class="flex min-w-0 flex-1 max-md:order-1 max-md:min-h-[calc(100vh-100px)]">
-			<div class="flex-1 rounded-3xl p-1">
-				<div class="overflow-y-auto rounded-2xl p-8 max-md:p-5">
+		<main class="flex min-h-0 min-w-0 flex-1 max-md:order-1">
+			<div class="flex h-full flex-1 flex-col overflow-hidden rounded-3xl p-1">
+				<div class="h-full overflow-y-auto rounded-2xl p-8 max-md:p-5">
 					{@render children()}
 				</div>
 			</div>
@@ -132,10 +133,5 @@
 		100% {
 			transform: translate(0, 0);
 		}
-	}
-
-	textarea,
-	input {
-		font-family: inherit;
 	}
 </style>
