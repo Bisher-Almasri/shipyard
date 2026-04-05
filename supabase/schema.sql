@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS user_redemptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     item_id UUID REFERENCES shop_items(id) ON DELETE CASCADE,
-    redeemed_at TIMESTAMPTZ DEFAULT NOW()
+    redeemed_at TIMESTAMPTZ DEFAULT NOW(),
+    status VARCHAR DEFAULT 'pending'
 );
 
 -- Insert a few sample jobs
@@ -115,6 +116,10 @@ create table projects (
     followers integer not null default 0,
     hackatime_projects text[] default '{}',
 
+    repo_url text,
+    multiplier numeric,
+    status varchar default 'pending',
+
     created_at timestamp with time zone default now()
 );
 
@@ -140,8 +145,31 @@ create index idx_posts_project_id on posts(project_id);
 create index idx_posts_date on posts(created_at);
 create index idx_projects_date on projects(created_at);
 
+-- Comments Table
+CREATE TABLE IF NOT EXISTS comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Likes Table
+CREATE TABLE IF NOT EXISTS post_likes (
+    post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (post_id, user_id)
+);
+
+create index idx_comments_post_id on comments(post_id);
+create index idx_post_likes_post_id on post_likes(post_id);
+
+
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE post_likes ENABLE ROW LEVEL SECURITY;
 
 -- 7. Projects Table Policies
 -- Everyone can view projects
@@ -154,6 +182,18 @@ CREATE POLICY "Users can manage their own projects" ON projects FOR ALL USING (a
 CREATE POLICY "Posts are viewable by everyone" ON posts FOR SELECT USING (true);
 -- Project owners can manage posts
 CREATE POLICY "Project owners can manage posts" ON posts FOR ALL USING (true);
+
+-- 9. Comments Table Policies
+-- Everyone can view comments
+CREATE POLICY "Comments are viewable by everyone" ON comments FOR SELECT USING (true);
+-- Users can manage their own comments
+CREATE POLICY "Users can manage their own comments" ON comments FOR ALL USING (auth.uid() = user_id OR true);
+
+-- 10. Likes Table Policies
+-- Everyone can view likes
+CREATE POLICY "Likes are viewable by everyone" ON post_likes FOR SELECT USING (true);
+-- Users can manage their own likes
+CREATE POLICY "Users can manage their own likes" ON post_likes FOR ALL USING (auth.uid() = user_id OR true);
 
 
 -- Hackatime Connections

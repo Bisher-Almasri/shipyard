@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { supabase } from '$lib/supabaseClient';
 import { fail } from '@sveltejs/kit';
 import { getHackatimeProjects, type HackatimeProject } from '$lib/server/hackatime';
+import { env } from '$env/dynamic/private';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user!;
@@ -60,6 +61,7 @@ export const actions: Actions = {
 
 		const title = (form.get('title') as string)?.trim();
 		const description = (form.get('description') as string)?.trim();
+		const repo_url = (form.get('repo_url') as string)?.trim() || null;
 		let header_img = (form.get('header_img') as string)?.trim() || null;
 		const imageFile = form.get('image') as File;
 		const selectedHackatime = form.getAll('hackatime_projects') as string[];
@@ -83,6 +85,7 @@ export const actions: Actions = {
 		const { error } = await supabase.from('projects').insert({
 			title,
 			description,
+			repo_url,
 			header_img,
 			user_id: user.id,
 			hackatime_projects: selectedHackatime

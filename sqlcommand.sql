@@ -7,6 +7,8 @@ ALTER TABLE shop_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_redemptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE post_likes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hackatime_connections ENABLE ROW LEVEL SECURITY;
 
 -- 1. Users Table Policies
@@ -42,3 +44,19 @@ CREATE POLICY "Project owners can manage posts" ON posts FOR ALL USING (true);
 
 -- 9. Hackatime Connections Table Policies
 CREATE POLICY "Users can manage their own Hackatime connections" ON hackatime_connections FOR ALL USING (auth.uid() = user_id OR true);
+
+-- 10. Comments Table Policies
+CREATE POLICY "Comments are viewable by everyone" ON comments FOR SELECT USING (true);
+CREATE POLICY "Users can manage their own comments" ON comments FOR ALL USING (auth.uid() = user_id OR true);
+
+-- 11. Likes Table Policies
+CREATE POLICY "Likes are viewable by everyone" ON post_likes FOR SELECT USING (true);
+CREATE POLICY "Users can manage their own likes" ON post_likes FOR ALL USING (auth.uid() = user_id OR true);
+
+-- Add Slack integration columns to projects
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS repo_url TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS multiplier NUMERIC;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending';
+
+-- Add status column to user_redemptions
+ALTER TABLE user_redemptions ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending';

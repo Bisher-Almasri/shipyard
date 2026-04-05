@@ -169,6 +169,18 @@
 					></textarea>
 				</div>
 				<div>
+					<label for="proj-repo" class="mb-1.5 block text-sm font-bold text-white/75">
+						Repository URL <span class="text-xs font-normal text-white/35">(optional)</span>
+					</label>
+					<input
+						id="proj-repo"
+						name="repo_url"
+						type="url"
+						placeholder="https://github.com/my/project"
+						class="field-input"
+					/>
+				</div>
+				<div>
 					<label for="hackatime-select" class="mb-1.5 block text-sm font-bold text-white/75">
 						Link Hackatime Projects <span class="text-red-300">*</span>
 					</label>
