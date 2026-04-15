@@ -103,7 +103,7 @@ export const actions: Actions = {
 		}
 
 		// Sync to Airtable
-		syncProjectToAirtable(newProject.id);
+		// syncProjectToAirtable(newProject.id);
 
 		return { success: true };
 	}

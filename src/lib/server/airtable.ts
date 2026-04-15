@@ -1,5 +1,4 @@
 import { supabase } from '$lib/supabaseClient';
-// Import from SvelteKit if available, otherwise use process.env for standalone scripts
 const pat = process.env.PRIVATE_AIRTABLE_PAT;
 const baseId = process.env.PRIVATE_AIRTABLE_BASE_ID;
 const tableId = process.env.PRIVATE_AIRTABLE_PROJECTS_TABLE;
@@ -11,7 +10,7 @@ export async function syncProjectToAirtable(projectId: string) {
 	}
 
 	try {
-		// Fetch project, user details, and the latest dev log attachment
+	
 		const { data: project, error } = await supabase
 			.from('projects')
 			.select('*, users(*), posts(attachment)')
@@ -25,7 +24,7 @@ export async function syncProjectToAirtable(projectId: string) {
 			return;
 		}
 
-		// Get the latest dev log attachment
+	
 		const latestPost = project.posts?.[0];
 		const screenshotUrl = latestPost?.attachment || project.header_img || '';
 
@@ -53,7 +52,7 @@ export async function syncProjectToAirtable(projectId: string) {
 			'Screenshot': screenshotUrl ? [{ url: screenshotUrl }] : []
 		};
 
-		// 1. Check if record exists in Airtable using Code URL as the identifier
+	
 		const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableId)}?filterByFormula=${encodeURIComponent(`{Code URL}='${project.repo_url}'`)}`;
 		const searchRes = await fetch(searchUrl, {
 			headers: {
@@ -71,7 +70,7 @@ export async function syncProjectToAirtable(projectId: string) {
 		const existingRecord = searchData.records?.[0];
 
 		if (existingRecord) {
-			// 2. Update existing record
+		
 			const updateUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableId)}/${existingRecord.id}`;
 			const updateRes = await fetch(updateUrl, {
 				method: 'PATCH',
@@ -89,7 +88,7 @@ export async function syncProjectToAirtable(projectId: string) {
 				console.log(`Successfully updated project ${project.id} in Airtable.`);
 			}
 		} else {
-			// 3. Create new record
+		
 			const createUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableId)}`;
 			const createRes = await fetch(createUrl, {
 				method: 'POST',
