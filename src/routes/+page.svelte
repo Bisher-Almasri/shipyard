@@ -25,25 +25,25 @@
 				<p class="leaqding-relaxed mb-10 text-2xl font-bold text-black/80 md:text-3xl">
 					Ship 7 weeks of coding & computing challenges. Earn Prizes.
 				</p>
-				<!-- <button
+				<button
 					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
 					onclick={() => {
 						window.open('https://shipyard.fillout.com/rsvp', '_blank');
 					}}
 				>
 					RSVP Now!
-				</button> -->
-				<button
+				</button>
+				<!-- <button
 					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
 					onclick={() => {
 						window.open(
-							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile email name slack_id verification_status`,
+							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile basic_info phone birthdate address`,
 							'_self'
 						);
 					}}
 				>
 					Sign Up!
-				</button>
+				</button> -->
 			</div>
 		</div>
 
@@ -224,25 +224,25 @@
 	<footer class="relative overflow-hidden bg-[#1A5276] px-8 py-32 text-center">
 		<div class="relative z-10 container mx-auto">
 			<h2 class="mb-12 font-marker text-7xl uppercase italic md:text-8xl">READY?</h2>
-			<button
+			<!-- <button
 				class="mb-32 rounded-2xl bg-[#2d7fd5] px-12 py-5 text-4xl font-bold text-white shadow-[0px_6px_0px_0px_#143d5c] transition-all hover:bg-[#3d93ef] active:translate-y-1 active:shadow-none"
 				onclick={() => {
 						window.open(
-							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile email name slack_id verification_status`,
+							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile basic_info phone birthdate address`,
 							'_self'
 						);
 					}}
 			>
 				Sign up!
-			</button>
-			<!-- <button
+			</button> -->
+			<button
 				class="mb-32 rounded-2xl bg-[#2d7fd5] px-12 py-5 text-4xl font-bold text-white shadow-[0px_6px_0px_0px_#143d5c] transition-all hover:bg-[#3d93ef] active:translate-y-1 active:shadow-none"
 				onclick={() => {
 					window.open('https://shipyard.fillout.com/rsvp', '_blank');
 				}}
 			>
 				RSVP Now!
-			</button> -->
+			</button>
 			<div class="mt-20 flex flex-col items-center gap-4">
 				<div class="flex items-center gap-4 text-xl font-bold opacity-80 md:text-2xl">
 					<span>Shipyard is from</span>

@@ -41,19 +41,39 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.eq('project_id', params.id)
 		.order('created_at', { ascending: false });
 
+	// Fetch all jobs
+	const { data: jobs } = await supabase.from('jobs').select('*');
+
+	// Fetch user's completed jobs
+	const { data: completedJobs } = await supabase
+		.from('user_jobs')
+		.select('job_id')
+		.eq('user_id', user.id);
+
+	const completedJobIds = new Set((completedJobs || []).map((j) => j.job_id));
+	const availableJobs = (jobs || []).filter((j) => !completedJobIds.has(j.id));
+
 	return {
 		project,
 		user,
-		posts: posts || []
+		posts: posts || [],
+		availableJobs
 	};
 };
 
 export const actions: Actions = {
-	ship: async ({ locals, params }) => {
+	ship: async ({ locals, params, request }) => {
 		const user = locals.user;
 		if (!user) return fail(401);
 
 		const projectId = params.id;
+		const formData = await request.formData();
+		const challengeId = formData.get('challengeId') as string;
+		const playable_url = (formData.get('playable_url') as string)?.trim();
+
+		if (!challengeId) {
+			return fail(400, { message: 'You must select a challenge to ship.' });
+		}
 
 		const { data: project } = await supabase
 			.from('projects')
@@ -62,13 +82,62 @@ export const actions: Actions = {
 			.single();
 
 		if (!project) return fail(404, { message: 'Project not found' });
-		if (project.user_id !== user.id) return fail(403, { message: 'Unauthorized' });
-		if (project.status === 'shipped' || project.status === 'approved' || project.status === 'rejected') {
+
+		// Playable URL check
+		const finalPlayableUrl = playable_url || project.playable_url;
+		if (!finalPlayableUrl) {
+			return fail(400, { message: 'Playable URL is mandatory to ship your project!' });
+		}
+
+		if (user.id !== project.user_id) return fail(403, { message: 'Unauthorized' });
+		if (
+			project.status === 'shipped' ||
+			project.status === 'approved' ||
+			project.status === 'rejected'
+		) {
 			return fail(400, { message: 'Project already shipped or reviewed' });
 		}
 
+		// Fetch dev logs for validation
+		const { data: posts } = await supabase
+			.from('posts')
+			.select('id, attachment')
+			.eq('project_id', projectId);
+
+		if (!posts || posts.length === 0) {
+			return fail(400, { message: 'You must have at least 1 dev log to ship.' });
+		}
+
+		const missingImages = posts.some((p) => !p.attachment || p.attachment.trim() === '');
+		if (missingImages) {
+			return fail(400, { message: 'Every dev log must have an image or attachment to ship.' });
+		}
+
+		// Mark challenge as completed
+		await supabase.from('user_jobs').insert({
+			user_id: user.id,
+			job_id: challengeId
+		});
+
 		// Update to shipped
-		await supabase.from('projects').update({ status: 'shipped' }).eq('id', projectId);
+		await supabase
+			.from('projects')
+			.update({ 
+				status: 'shipped',
+				playable_url: finalPlayableUrl
+			})
+			.eq('id', projectId);
+
+		// Sync to Airtable
+		const { syncProjectToAirtable } = await import('$lib/server/airtable');
+		syncProjectToAirtable(projectId);
+
+		// Fetch challenge details for Slack message
+		const { data: challenge } = await supabase
+			.from('jobs')
+			.select('title')
+			.eq('id', challengeId)
+			.single();
 
 		if (env.SLACK_BOT_TOKEN && env.SLACK_REVIEW_CHANNEL_ID) {
 			try {
@@ -80,13 +149,13 @@ export const actions: Actions = {
 					},
 					body: JSON.stringify({
 						channel: env.SLACK_REVIEW_CHANNEL_ID,
-						text: `Project Shipped: ${project.title}\nUser: ${project.users?.name} (${project.users?.hackclub_id})\nURL: ${project.repo_url || ''}`,
+						text: `Project Shipped: ${project.title}\nChallenge: ${challenge?.title || 'Unknown'}\nUser: ${project.users?.name} (${project.users?.hackclub_id})\nURL: ${project.repo_url || ''}`,
 						blocks: [
 							{
 								type: 'section',
 								text: {
 									type: 'mrkdwn',
-									text: `*Project Shipped: ${project.title}*\n*User:* <@${project.users?.hackclub_id}>`
+									text: `*Project Shipped: ${project.title}*\n*Challenge:* ${challenge?.title || 'Unknown'}\n*User:* <@${project.users?.hackclub_id}>`
 								}
 							},
 							{
@@ -197,5 +266,38 @@ export const actions: Actions = {
 		}
 
 		return { success: true, comment: data };
+	},
+
+	updateProject: async ({ locals, params, request }) => {
+		const user = locals.user;
+		if (!user) return fail(401);
+
+		const projectId = params.id;
+		const formData = await request.formData();
+		const title = formData.get('title') as string;
+		const description = formData.get('description') as string;
+		const repo_url = formData.get('repo_url') as string;
+		const playable_url = formData.get('playable_url') as string;
+
+		if (!title || !description) {
+			return fail(400, { message: 'Title and description are required.' });
+		}
+
+		const { error: updateError } = await supabase
+			.from('projects')
+			.update({
+				title,
+				description,
+				repo_url: repo_url || null,
+				playable_url: playable_url || null
+			})
+			.eq('id', projectId)
+			.eq('user_id', user.id);
+
+		if (updateError) {
+			return fail(500, { message: 'Failed to update project.' });
+		}
+
+		return { success: true };
 	}
 };

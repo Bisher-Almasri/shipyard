@@ -181,6 +181,18 @@
 					/>
 				</div>
 				<div>
+					<label for="proj-playable" class="mb-1.5 block text-sm font-bold text-white/75">
+						Playable URL <span class="text-xs font-normal text-white/35">(optional)</span>
+					</label>
+					<input
+						id="proj-playable"
+						name="playable_url"
+						type="url"
+						placeholder="https://my-game.vercel.app"
+						class="field-input"
+					/>
+				</div>
+				<div>
 					<label for="hackatime-select" class="mb-1.5 block text-sm font-bold text-white/75">
 						Link Hackatime Projects <span class="text-red-300">*</span>
 					</label>

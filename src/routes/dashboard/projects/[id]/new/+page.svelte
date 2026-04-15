@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { ArrowLeft, FileText, Image as ImageIcon, Upload } from 'lucide-svelte';
+	import { ArrowLeft, FileText, Image as ImageIcon, Upload, Clock } from 'lucide-svelte';
+	import { toast } from '$lib/toast';
 	import { enhance } from '$app/forms';
 
-	const { data } = $props();
+	let { data, form: actionForm } = $props();
 
 	let fileName = $state('');
 	let attachmentUrl = $state('');
@@ -14,6 +15,12 @@
 			attachmentUrl = ''; 
 		}
 	}
+
+	$effect(() => {
+		if (actionForm?.error) {
+			toast.error(actionForm.error);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -29,12 +36,14 @@
 	Back to {data.project.title}
 </a>
 
-<div class="mb-6 text-center">
-	<h1 class="m-0 font-marker text-4xl text-white max-md:text-3xl">New Dev Log</h1>
-	<p class="m-0 mt-2 text-base font-bold text-white/60">
-		Logging for <span class="text-[#B8E4FF]">{data.project.title}</span>
-	</p>
-</div>
+{#if data.project}
+	<div class="mb-6 text-center">
+		<h1 class="m-0 font-marker text-4xl text-white max-md:text-3xl">New Dev Log</h1>
+		<p class="m-0 mt-2 text-base font-bold text-white/60">
+			Logging for <span class="text-[#B8E4FF]">{data.project.title}</span>
+		</p>
+	</div>
+{/if}
 
 <div class="mx-auto max-w-xl rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
 	<form method="POST" use:enhance enctype="multipart/form-data" class="flex flex-col gap-5">
@@ -67,17 +76,27 @@
 			></textarea>
 		</div>
 
+		<div class="rounded-xl border border-blue-400/20 bg-blue-400/10 p-4">
+			<div class="flex items-center gap-2 mb-1">
+				<Clock size={16} class="text-blue-300" />
+				<span class="text-sm font-bold text-white">Automated Time Tracking</span>
+			</div>
+			<p class="text-xs text-white/60 leading-relaxed">
+				Current session: <span class="font-bold text-blue-200">{data.suggestedHours}h</span> will be logged from your linked Hackatime projects.
+			</p>
+		</div>
+
 		<div>
 			<div class="section-label-bar cyan">
 				<ImageIcon size={13} />
-				<span>Attachment</span>
+				<span>Attachment <span class="text-red-300">*</span></span>
 			</div>
 			<div class="attachment-group">
 				<input
 					id="post-attach"
 					name="attachment"
 					type="url"
-					placeholder="Paste a screenshot, demo, or video URL…"
+					placeholder="Paste a screenshot URL..."
 					class="field-input"
 					bind:value={attachmentUrl}
 				/>
@@ -97,8 +116,7 @@
 				</div>
 			</div>
 			<p class="mt-2 text-xs leading-snug text-white/35">
-				Show your project's output — screenshots, demo links, videos, etc. Screenshots of just a
-				code editor won't be accepted.
+				Show your project's output. A dev log MUST have an image or screenshot to be valid for shipping.
 			</p>
 		</div>
 

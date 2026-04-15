@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { BookOpen, Clock, ArrowLeft, Plus, Pencil, LayoutGrid, Rocket } from 'lucide-svelte';
 	import Post from '$lib/components/Post.svelte';
+	import { toast } from '$lib/toast';
 	import { enhance } from '$app/forms';
 
-	let { data } = $props();
+	let { data, form: actionForm } = $props();
+	let showEditModal = $state(false);
 
 	function formatDate(dateStr: string) {
 		return new Date(dateStr).toLocaleDateString('en-US', {
@@ -12,6 +14,12 @@
 			year: 'numeric'
 		});
 	}
+
+	$effect(() => {
+		if (actionForm?.message && !actionForm.success) {
+			toast.error(actionForm.message);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -66,14 +74,38 @@
 
 			<div class="flex shrink-0 items-center gap-2">
 				{#if data.project.status === 'pending' || !data.project.status}
-					<form method="POST" action="?/ship" use:enhance>
-						<button
-							type="submit"
-							class="flex items-center gap-1.5 rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white no-underline shadow-md transition-all hover:scale-105 hover:bg-green-400 active:scale-95"
-						>
-							<Rocket size={15} />
-							Ship It!
-						</button>
+					<form method="POST" action="?/ship" use:enhance class="flex flex-col gap-2">
+						{#if data.availableJobs.length > 0}
+							<div class="flex items-center gap-2">
+								<select
+									name="challengeId"
+									required
+									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none transition-all focus:border-white/40"
+								>
+									<option value="" disabled selected>Select Challenge</option>
+									{#each data.availableJobs as job}
+										<option value={job.id}>{job.title} (+{job.points} pts)</option>
+									{/each}
+								</select>
+								<input
+									name="playable_url"
+									type="url"
+									placeholder="Playable URL (Mandatory)"
+									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none transition-all focus:border-white/40"
+									value={data.project.playable_url || ''}
+									required
+								/>
+								<button
+									type="submit"
+									class="flex items-center gap-1.5 rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white no-underline shadow-md transition-all hover:scale-105 hover:bg-green-400 active:scale-95"
+								>
+									<Rocket size={15} />
+									Ship It!
+								</button>
+							</div>
+						{:else}
+							<p class="text-[10px] font-bold text-red-300">No challenges available to complete!</p>
+						{/if}
 					</form>
 				{:else if data.project.status === 'shipped'}
 					<span class="rounded-xl border border-yellow-400/30 bg-yellow-400/20 px-3 py-1.5 text-xs font-bold text-yellow-300">
@@ -88,7 +120,12 @@
 						Review Rejected
 					</span>
 				{/if}
-				<button class="edit-btn" title="Edit project" aria-label="Edit project">
+				<button 
+					onclick={() => (showEditModal = true)}
+					class="edit-btn" 
+					title="Edit project" 
+					aria-label="Edit project"
+				>
 					<Pencil size={16} />
 				</button>
 				<a
@@ -132,6 +169,96 @@
 		{#each data.posts as post}
 			<Post {post} user={data.user} />
 		{/each}
+	</div>
+{/if}
+
+{#if showEditModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+		role="dialog"
+		aria-modal="true"
+	>
+		<div
+			class="modal-slide-in w-full max-w-lg rounded-3xl border border-white/20 bg-gradient-to-b from-[#2A68B0] to-[#1F5390] p-6 shadow-2xl"
+		>
+			<div class="mb-5 flex items-center justify-between">
+				<h2 class="m-0 font-marker text-2xl text-white">Edit Project</h2>
+				<button
+					onclick={() => (showEditModal = false)}
+					class="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+				>
+					<X size={18} />
+				</button>
+			</div>
+
+			<form
+				method="POST"
+				action="?/updateProject"
+				use:enhance={() => {
+					return ({ result }) => {
+						if (result.type === 'success') {
+							showEditModal = false;
+						}
+					};
+				}}
+				class="flex flex-col gap-4"
+			>
+				<div>
+					<label for="edit-title" class="mb-1.5 block text-sm font-bold text-white/75">Project Title</label>
+					<input
+						id="edit-title"
+						name="title"
+						type="text"
+						value={data.project.title}
+						required
+						class="field-input"
+					/>
+				</div>
+				<div>
+					<label for="edit-desc" class="mb-1.5 block text-sm font-bold text-white/75">Description</label>
+					<textarea
+						id="edit-desc"
+						name="description"
+						rows={3}
+						required
+						class="field-input"
+					>{data.project.description}</textarea>
+				</div>
+				<div>
+					<label for="edit-repo" class="mb-1.5 block text-sm font-bold text-white/75">Repository URL</label>
+					<input
+						id="edit-repo"
+						name="repo_url"
+						type="url"
+						value={data.project.repo_url || ''}
+						class="field-input"
+					/>
+				</div>
+				<div>
+					<label for="edit-playable" class="mb-1.5 block text-sm font-bold text-white/75">Playable URL</label>
+					<input
+						id="edit-playable"
+						name="playable_url"
+						type="url"
+						value={data.project.playable_url || ''}
+						class="field-input"
+					/>
+				</div>
+				<div class="mt-2 flex gap-3">
+					<button
+						type="button"
+						onclick={() => (showEditModal = false)}
+						class="flex-1 rounded-xl border border-white/20 bg-white/10 py-2.5 font-bold text-white"
+						>Cancel</button
+					>
+					<button
+						type="submit"
+						class="flex-1 rounded-xl bg-white py-2.5 font-bold text-[#1F5390]"
+						>Save Changes</button
+					>
+				</div>
+			</form>
+		</div>
 	</div>
 {/if}
 

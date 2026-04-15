@@ -85,7 +85,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 
 		const hackclubId = user.slack_id || user.id || Object.values(user)[0]?.toString() || '';
 		const name = user.first_name + ' ' + user.last_name || 'Unknown Hacker';
-		const email = user.email || '';
+		const email = user.primary_email || '';
 		const avatar = `https://cachet.dunkirk.sh/users/${user.slack_id}/r`;
 
 		if (!hackclubId) {
@@ -100,7 +100,9 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 					hackclub_id: hackclubId,
 					name,
 					email,
-					avatar
+					avatar,
+					address: user.addresses?.[0] || null,
+					birthday: user.birthday || null
 				},
 				{ onConflict: 'hackclub_id' }
 			)

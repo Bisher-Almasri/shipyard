@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR NOT NULL,
     email VARCHAR NOT NULL,
     avatar VARCHAR,
+    address JSONB,
+    birthday DATE,
     cargo_points INT DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -117,6 +119,7 @@ create table projects (
     hackatime_projects text[] default '{}',
 
     repo_url text,
+    playable_url text,
     multiplier numeric,
     status varchar default 'pending',
 
@@ -132,6 +135,7 @@ create table posts (
     title text not null,
     description text not null,
     attachment text default '',
+    hours numeric default 0,
 
     -- date bigint not null,
     likes integer not null default 0,

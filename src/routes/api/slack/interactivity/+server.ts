@@ -147,6 +147,10 @@ export const POST: RequestHandler = async ({ request }) => {
 				.update({ status: newStatus, multiplier })
 				.eq('id', targetId);
 
+			// Sync to Airtable
+			const { syncProjectToAirtable } = await import('$lib/server/airtable');
+			syncProjectToAirtable(targetId);
+
 			// Send DM to user
 			if (env.SLACK_BOT_TOKEN && project.users?.hackclub_id) {
 				let dmText = '';

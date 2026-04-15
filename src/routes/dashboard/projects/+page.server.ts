@@ -52,6 +52,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
+import { syncProjectToAirtable } from '$lib/server/airtable';
 import { uploadImage } from '$lib/server/cdn';
 
 export const actions: Actions = {
@@ -62,6 +63,7 @@ export const actions: Actions = {
 		const title = (form.get('title') as string)?.trim();
 		const description = (form.get('description') as string)?.trim();
 		const repo_url = (form.get('repo_url') as string)?.trim() || null;
+		const playable_url = (form.get('playable_url') as string)?.trim() || null;
 		let header_img = (form.get('header_img') as string)?.trim() || null;
 		const imageFile = form.get('image') as File;
 		const selectedHackatime = form.getAll('hackatime_projects') as string[];
@@ -82,18 +84,26 @@ export const actions: Actions = {
 			}
 		}
 
-		const { error } = await supabase.from('projects').insert({
-			title,
-			description,
-			repo_url,
-			header_img,
-			user_id: user.id,
-			hackatime_projects: selectedHackatime
-		});
+		const { data: newProject, error } = await supabase
+			.from('projects')
+			.insert({
+				title,
+				description,
+				repo_url,
+				playable_url,
+				header_img,
+				user_id: user.id,
+				hackatime_projects: selectedHackatime
+			})
+			.select()
+			.single();
 
-		if (error) {
-			return fail(500, { error: error.message });
+		if (error || !newProject) {
+			return fail(500, { error: error?.message || 'Failed to create project' });
 		}
+
+		// Sync to Airtable
+		syncProjectToAirtable(newProject.id);
 
 		return { success: true };
 	}
