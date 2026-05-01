@@ -3,6 +3,7 @@ import { supabase } from '$lib/supabaseClient';
 import { error, fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { buildProjectReviewBlocks } from '$lib/server/slack';
+import { syncProjectToAirtable } from '$lib/server/airtable';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const user = locals.user!;
@@ -153,8 +154,7 @@ export const actions: Actions = {
 			.eq('id', projectId);
 
 		// Sync to Airtable
-		const { syncProjectToAirtable } = await import('$lib/server/airtable');
-		syncProjectToAirtable(projectId);
+		await syncProjectToAirtable(projectId);
 
 		// Fetch challenge details for Slack message
 		const { data: challenge } = await supabase
