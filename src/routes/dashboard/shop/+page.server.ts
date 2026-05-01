@@ -1,6 +1,10 @@
 import type { PageServerLoad, Actions } from './$types';
 import { supabase } from '$lib/supabaseClient';
-import { SLACK_BOT_TOKEN, SLACK_SHOP_CHANNEL_ID, SLACK_REVIEW_CHANNEL_ID } from '$env/static/private';
+import {
+	SLACK_BOT_TOKEN,
+	SLACK_SHOP_CHANNEL_ID,
+	SLACK_REVIEW_CHANNEL_ID
+} from '$env/static/private';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -34,7 +38,10 @@ export const actions: Actions = {
 			return fail(401, { error: 'Unauthorized' });
 		}
 
-		console.log('User from locals:', JSON.stringify({ id: user.id, hackclub_id: user.hackclub_id, name: user.name }));
+		console.log(
+			'User from locals:',
+			JSON.stringify({ id: user.id, hackclub_id: user.hackclub_id, name: user.name })
+		);
 
 		const formData = await request.formData();
 		console.log('FormData received');
@@ -47,7 +54,11 @@ export const actions: Actions = {
 		}
 
 		console.log('Fetching item from Supabase...');
-		const { data: item, error: itemError } = await supabase.from('shop_items').select('*').eq('id', itemId).single();
+		const { data: item, error: itemError } = await supabase
+			.from('shop_items')
+			.select('*')
+			.eq('id', itemId)
+			.single();
 		if (itemError) console.error('Item Fetch Error:', itemError);
 		if (!item) {
 			console.log('Error: Item not found');
@@ -56,7 +67,11 @@ export const actions: Actions = {
 		console.log('Item found:', item.name);
 
 		console.log('Fetching user data from Supabase...');
-		const { data: userData, error: userError } = await supabase.from('users').select('*').eq('id', user.id).single();
+		const { data: userData, error: userError } = await supabase
+			.from('users')
+			.select('*')
+			.eq('id', user.id)
+			.single();
 		if (userError) console.error('User Fetch Error:', userError);
 		if (!userData || userData.cargo_points < item.cost) {
 			console.log('Error: Not enough points', userData?.cargo_points, item.cost);
@@ -101,13 +116,13 @@ export const actions: Actions = {
 		if (SLACK_BOT_TOKEN && slackChannel) {
 			const slackUserHandle = user.hackclub_id ? `<@${user.hackclub_id}>` : `*${user.name}*`;
 			const slackMsg = `🚨 *New Shop Purchase!* 🚨\n${slackUserHandle} just bought *${item.name}*!`;
-			
+
 			try {
 				const res = await fetch('https://slack.com/api/chat.postMessage', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${SLACK_BOT_TOKEN}`
+						Authorization: `Bearer ${SLACK_BOT_TOKEN}`
 					},
 					body: JSON.stringify({
 						channel: slackChannel,
@@ -144,7 +159,7 @@ export const actions: Actions = {
 
 				const slackResponse = await res.json();
 				console.log('Slack API Response:', JSON.stringify(slackResponse, null, 2));
-				
+
 				if (!slackResponse.ok) {
 					console.error('Slack API Error (Shop):', slackResponse.error);
 				} else {

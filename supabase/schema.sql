@@ -122,6 +122,12 @@ create table projects (
     playable_url text,
     multiplier numeric,
     status varchar default 'pending',
+    review_stage varchar default 'first_round',
+    selected_job_id uuid references jobs(id) on delete set null,
+    payout_awarded_at timestamp with time zone,
+    first_reviewer_slack_id text,
+    final_reviewer_slack_id text,
+    last_reviewer_message text,
 
     created_at timestamp with time zone default now()
 );
@@ -148,6 +154,8 @@ create index idx_posts_project_id on posts(project_id);
 
 create index idx_posts_date on posts(created_at);
 create index idx_projects_date on projects(created_at);
+create index idx_projects_review_stage on projects(review_stage);
+create index idx_projects_payout_awarded_at on projects(payout_awarded_at);
 
 -- Comments Table
 CREATE TABLE IF NOT EXISTS comments (

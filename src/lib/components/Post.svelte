@@ -34,7 +34,7 @@
 	<div class="flex items-start gap-3 px-5 pt-5 pb-3">
 		<div class="avatar-ring shrink-0">
 			<img
-				src={(post.project?.user?.avatar || post.user?.avatar) || '/pfp.png'}
+				src={post.project?.user?.avatar || post.user?.avatar || '/pfp.png'}
 				alt="Avatar"
 				class="h-full w-full object-cover"
 			/>
@@ -60,7 +60,9 @@
 					{timeAgo(post.created_at)}
 				</div>
 				{#if post.hours}
-					<div class="rounded-md bg-[#B8E4FF]/15 px-1.5 py-0.5 text-[10px] font-bold text-[#B8E4FF] uppercase tracking-wider">
+					<div
+						class="rounded-md bg-[#B8E4FF]/15 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-[#B8E4FF] uppercase"
+					>
 						{post.hours}h spent
 					</div>
 				{/if}

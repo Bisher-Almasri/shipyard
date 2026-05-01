@@ -10,7 +10,6 @@ export async function syncProjectToAirtable(projectId: string) {
 	}
 
 	try {
-	
 		const { data: project, error } = await supabase
 			.from('projects')
 			.select('*, users(*), posts(attachment)')
@@ -24,7 +23,6 @@ export async function syncProjectToAirtable(projectId: string) {
 			return;
 		}
 
-	
 		const latestPost = project.posts?.[0];
 		const screenshotUrl = latestPost?.attachment || project.header_img || '';
 
@@ -35,24 +33,23 @@ export async function syncProjectToAirtable(projectId: string) {
 		const lastName = nameParts.slice(1).join(' ') || '';
 
 		const fields = {
-			'Description': project.description,
+			Description: project.description,
 			'Code URL': project.repo_url || '',
 			'Playable URL': project.playable_url || '',
 			'First Name': firstName,
 			'Last Name': lastName,
-			'Email': project.users?.email || '',
-			'Birthday': project.users?.birthday || '',
+			Email: project.users?.email || '',
+			Birthday: project.users?.birthday || '',
 			'GitHub Username': project.users?.name || '',
 			'Address (Line 1)': address.line_1 || '',
 			'Address (Line 2)': address.line_2 || '',
-			'City': address.city || '',
+			City: address.city || '',
 			'State / Province': address.state || '',
 			'ZIP / Postal Code': address.postal_code || '',
-			'Country': address.country || '',
-			'Screenshot': screenshotUrl ? [{ url: screenshotUrl }] : []
+			Country: address.country || '',
+			Screenshot: screenshotUrl ? [{ url: screenshotUrl }] : []
 		};
 
-	
 		const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableId)}?filterByFormula=${encodeURIComponent(`{Code URL}='${project.repo_url}'`)}`;
 		const searchRes = await fetch(searchUrl, {
 			headers: {
@@ -70,7 +67,6 @@ export async function syncProjectToAirtable(projectId: string) {
 		const existingRecord = searchData.records?.[0];
 
 		if (existingRecord) {
-		
 			const updateUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableId)}/${existingRecord.id}`;
 			const updateRes = await fetch(updateUrl, {
 				method: 'PATCH',
@@ -88,7 +84,6 @@ export async function syncProjectToAirtable(projectId: string) {
 				console.log(`Successfully updated project ${project.id} in Airtable.`);
 			}
 		} else {
-		
 			const createUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableId)}`;
 			const createRes = await fetch(createUrl, {
 				method: 'POST',

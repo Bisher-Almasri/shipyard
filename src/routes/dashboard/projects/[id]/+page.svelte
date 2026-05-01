@@ -80,7 +80,7 @@
 								<select
 									name="challengeId"
 									required
-									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none transition-all focus:border-white/40"
+									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white transition-all outline-none focus:border-white/40"
 								>
 									<option value="" disabled selected>Select Challenge</option>
 									{#each data.availableJobs as job}
@@ -91,7 +91,7 @@
 									name="playable_url"
 									type="url"
 									placeholder="Playable URL (Mandatory)"
-									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none transition-all focus:border-white/40"
+									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white transition-all outline-none focus:border-white/40"
 									value={data.project.playable_url || ''}
 									required
 								/>
@@ -108,22 +108,28 @@
 						{/if}
 					</form>
 				{:else if data.project.status === 'shipped'}
-					<span class="rounded-xl border border-yellow-400/30 bg-yellow-400/20 px-3 py-1.5 text-xs font-bold text-yellow-300">
+					<span
+						class="rounded-xl border border-yellow-400/30 bg-yellow-400/20 px-3 py-1.5 text-xs font-bold text-yellow-300"
+					>
 						Under Review
 					</span>
 				{:else if data.project.status === 'approved'}
-					<span class="rounded-xl border border-green-400/30 bg-green-400/20 px-3 py-1.5 text-xs font-bold text-green-300">
+					<span
+						class="rounded-xl border border-green-400/30 bg-green-400/20 px-3 py-1.5 text-xs font-bold text-green-300"
+					>
 						Shipped & Approved ({data.project.multiplier}x)
 					</span>
 				{:else if data.project.status === 'rejected'}
-					<span class="rounded-xl border border-red-400/30 bg-red-400/20 px-3 py-1.5 text-xs font-bold text-red-300">
+					<span
+						class="rounded-xl border border-red-400/30 bg-red-400/20 px-3 py-1.5 text-xs font-bold text-red-300"
+					>
 						Review Rejected
 					</span>
 				{/if}
-				<button 
+				<button
 					onclick={() => (showEditModal = true)}
-					class="edit-btn" 
-					title="Edit project" 
+					class="edit-btn"
+					title="Edit project"
 					aria-label="Edit project"
 				>
 					<Pencil size={16} />
@@ -204,7 +210,9 @@
 				class="flex flex-col gap-4"
 			>
 				<div>
-					<label for="edit-title" class="mb-1.5 block text-sm font-bold text-white/75">Project Title</label>
+					<label for="edit-title" class="mb-1.5 block text-sm font-bold text-white/75"
+						>Project Title</label
+					>
 					<input
 						id="edit-title"
 						name="title"
@@ -215,17 +223,17 @@
 					/>
 				</div>
 				<div>
-					<label for="edit-desc" class="mb-1.5 block text-sm font-bold text-white/75">Description</label>
-					<textarea
-						id="edit-desc"
-						name="description"
-						rows={3}
-						required
-						class="field-input"
-					>{data.project.description}</textarea>
+					<label for="edit-desc" class="mb-1.5 block text-sm font-bold text-white/75"
+						>Description</label
+					>
+					<textarea id="edit-desc" name="description" rows={3} required class="field-input"
+						>{data.project.description}</textarea
+					>
 				</div>
 				<div>
-					<label for="edit-repo" class="mb-1.5 block text-sm font-bold text-white/75">Repository URL</label>
+					<label for="edit-repo" class="mb-1.5 block text-sm font-bold text-white/75"
+						>Repository URL</label
+					>
 					<input
 						id="edit-repo"
 						name="repo_url"
@@ -235,7 +243,9 @@
 					/>
 				</div>
 				<div>
-					<label for="edit-playable" class="mb-1.5 block text-sm font-bold text-white/75">Playable URL</label>
+					<label for="edit-playable" class="mb-1.5 block text-sm font-bold text-white/75"
+						>Playable URL</label
+					>
 					<input
 						id="edit-playable"
 						name="playable_url"
@@ -251,9 +261,7 @@
 						class="flex-1 rounded-xl border border-white/20 bg-white/10 py-2.5 font-bold text-white"
 						>Cancel</button
 					>
-					<button
-						type="submit"
-						class="flex-1 rounded-xl bg-white py-2.5 font-bold text-[#1F5390]"
+					<button type="submit" class="flex-1 rounded-xl bg-white py-2.5 font-bold text-[#1F5390]"
 						>Save Changes</button
 					>
 				</div>
@@ -346,4 +354,3 @@
 		transform: scale(1.08);
 	}
 </style>
-

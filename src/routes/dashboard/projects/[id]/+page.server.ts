@@ -2,6 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { supabase } from '$lib/supabaseClient';
 import { error, fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { buildProjectReviewBlocks } from '$lib/server/slack';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const user = locals.user!;
@@ -10,15 +11,17 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.from('projects')
 		.select('*')
 		.eq('id', params.id)
+		.eq('user_id', user.id)
 		.single();
 
 	if (!project) {
-		throw error(404, 'Project not found');
+		throw error(404, 'Project not found or access denied');
 	}
 
 	const { data: posts } = await supabase
 		.from('posts')
-		.select(`
+		.select(
+			`
 			*,
 			project:projects (
 				user:users (
@@ -37,7 +40,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			post_likes (
 				user_id
 			)
-		`)
+		`
+		)
 		.eq('project_id', params.id)
 		.order('created_at', { ascending: false });
 
@@ -75,13 +79,26 @@ export const actions: Actions = {
 			return fail(400, { message: 'You must select a challenge to ship.' });
 		}
 
+		// Verify the selected job hasn't been completed by this user already
+		const { data: existingCompletion } = await supabase
+			.from('user_jobs')
+			.select('job_id')
+			.eq('user_id', user.id)
+			.eq('job_id', challengeId)
+			.single();
+
+		if (existingCompletion) {
+			return fail(400, { message: 'You have already completed this challenge. Choose a different one.' });
+		}
+
 		const { data: project } = await supabase
 			.from('projects')
 			.select('*, users(hackclub_id, name)')
 			.eq('id', projectId)
+			.eq('user_id', user.id)
 			.single();
 
-		if (!project) return fail(404, { message: 'Project not found' });
+		if (!project) return fail(403, { message: 'Project not found or access denied' });
 
 		// Playable URL check
 		const finalPlayableUrl = playable_url || project.playable_url;
@@ -89,6 +106,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Playable URL is mandatory to ship your project!' });
 		}
 
+		// Note: user_id check already done in load() and project fetch above, but keep this guard for safety
 		if (user.id !== project.user_id) return fail(403, { message: 'Unauthorized' });
 		if (
 			project.status === 'shipped' ||
@@ -122,9 +140,15 @@ export const actions: Actions = {
 		// Update to shipped
 		await supabase
 			.from('projects')
-			.update({ 
+			.update({
 				status: 'shipped',
-				playable_url: finalPlayableUrl
+				playable_url: finalPlayableUrl,
+				review_stage: 'first_round',
+				selected_job_id: challengeId,
+				last_reviewer_message: null,
+				first_reviewer_slack_id: null,
+				final_reviewer_slack_id: null,
+				payout_awarded_at: null
 			})
 			.eq('id', projectId);
 
@@ -140,6 +164,16 @@ export const actions: Actions = {
 			.single();
 
 		if (env.SLACK_BOT_TOKEN && env.SLACK_REVIEW_CHANNEL_ID) {
+			const blocks = buildProjectReviewBlocks({
+				id: project.id,
+				title: project.title,
+				description: project.description,
+				repo_url: project.repo_url || undefined,
+				user_name: project.users?.name || 'Unknown',
+				user_slack_id: project.users?.hackclub_id || '',
+				challenge_title: challenge?.title || 'Unknown'
+			});
+
 			try {
 				const res = await fetch('https://slack.com/api/chat.postMessage', {
 					method: 'POST',
@@ -150,52 +184,7 @@ export const actions: Actions = {
 					body: JSON.stringify({
 						channel: env.SLACK_REVIEW_CHANNEL_ID,
 						text: `Project Shipped: ${project.title}\nChallenge: ${challenge?.title || 'Unknown'}\nUser: ${project.users?.name} (${project.users?.hackclub_id})\nURL: ${project.repo_url || ''}`,
-						blocks: [
-							{
-								type: 'section',
-								text: {
-									type: 'mrkdwn',
-									text: `*Project Shipped: ${project.title}*\n*Challenge:* ${challenge?.title || 'Unknown'}\n*User:* <@${project.users?.hackclub_id}>`
-								}
-							},
-							{
-								type: 'section',
-								text: {
-									type: 'mrkdwn',
-									text: `*Description:*\n${project.description}\n*Repo URL:*\n${project.repo_url || 'N/A'}`
-								}
-							},
-							{
-								type: 'actions',
-								elements: [
-									{
-										type: 'static_select',
-										placeholder: {
-											type: 'plain_text',
-											text: 'Assign Multiplier',
-											emoji: true
-										},
-										options: [
-											{ text: { type: 'plain_text', text: '1x' }, value: '1' },
-											{ text: { type: 'plain_text', text: '2x' }, value: '2' },
-											{ text: { type: 'plain_text', text: '3x' }, value: '3' },
-										],
-										action_id: `assign_multiplier|${project.id}`
-									},
-									{
-										type: 'button',
-										text: {
-											type: 'plain_text',
-											text: 'Reject',
-											emoji: true
-										},
-										style: 'danger',
-										value: 'reject',
-										action_id: `reject_project|${project.id}`
-									}
-								]
-							}
-						]
+						blocks
 					})
 				});
 

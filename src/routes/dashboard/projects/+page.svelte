@@ -204,14 +204,17 @@
 						class="field-input h-32 px-2 py-1"
 					>
 						{#each data.hackatimeProjects as hproject}
-							<option value={hproject.name} class="rounded-lg px-2 py-1.5 font-semibold hover:bg-white/10">
+							<option
+								value={hproject.name}
+								class="rounded-lg px-2 py-1.5 font-semibold hover:bg-white/10"
+							>
 								{hproject.name}
 							</option>
 						{:else}
 							<option disabled>No projects found since March 20th</option>
 						{/each}
 					</select>
-					<p class="mt-2 text-[10px] font-medium uppercase tracking-wider text-white/30">
+					<p class="mt-2 text-[10px] font-medium tracking-wider text-white/30 uppercase">
 						Hold Cmd (Mac) or Ctrl (Windows) to select multiple
 					</p>
 				</div>

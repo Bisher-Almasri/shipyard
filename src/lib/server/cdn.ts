@@ -7,7 +7,7 @@ export async function uploadImage(file: File): Promise<string> {
 	const response = await fetch('https://cdn.hackclub.com/api/v4/upload', {
 		method: 'POST',
 		headers: {
-			'Authorization': `Bearer ${PRIVATE_HC_CDN_API_KEY}`
+			Authorization: `Bearer ${PRIVATE_HC_CDN_API_KEY}`
 		},
 		body: formData
 	});
@@ -25,7 +25,7 @@ export async function uploadFromUrl(url: string): Promise<string> {
 	const response = await fetch('https://cdn.hackclub.com/api/v4/upload_from_url', {
 		method: 'POST',
 		headers: {
-			'Authorization': `Bearer ${PRIVATE_HC_CDN_API_KEY}`,
+			Authorization: `Bearer ${PRIVATE_HC_CDN_API_KEY}`,
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({ url })

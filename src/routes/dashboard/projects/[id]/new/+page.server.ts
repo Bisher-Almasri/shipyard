@@ -29,9 +29,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		try {
 			const { getHackatimeProjects } = await import('$lib/server/hackatime');
 			const allProjects = await getHackatimeProjects(connection.access_token);
-			const linkedProjects = allProjects.filter((p) =>
-				project.hackatime_projects.includes(p.name)
-			);
+			const linkedProjects = allProjects.filter((p) => project.hackatime_projects.includes(p.name));
 			const totalHackatimeSeconds = linkedProjects.reduce((acc, p) => acc + p.total_seconds, 0);
 			const totalHackatimeHours = totalHackatimeSeconds / 3600;
 

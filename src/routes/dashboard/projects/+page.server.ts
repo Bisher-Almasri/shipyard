@@ -76,6 +76,26 @@ export const actions: Actions = {
 			return fail(400, { error: 'You must link at least one Hackatime project.' });
 		}
 
+		// Check if any selected Hackatime projects are already linked to other projects by this user
+		const { data: existingProjects } = await supabase
+			.from('projects')
+			.select('id, hackatime_projects')
+			.eq('user_id', user.id);
+
+		const existingHackatimeProjects = new Set<string>();
+		(existingProjects || []).forEach((p) => {
+			(p.hackatime_projects || []).forEach((hp: string) => {
+				existingHackatimeProjects.add(hp);
+			});
+		});
+
+		const reusingProjects = selectedHackatime.filter((hp) => existingHackatimeProjects.has(hp));
+		if (reusingProjects.length > 0) {
+			return fail(400, {
+				error: `You've already linked these Hackatime projects to other shipyard projects: ${reusingProjects.join(', ')}. Each Hackatime project can only be linked once.`
+			});
+		}
+
 		if (imageFile && imageFile.size > 0) {
 			try {
 				header_img = await uploadImage(imageFile);

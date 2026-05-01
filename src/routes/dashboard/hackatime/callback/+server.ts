@@ -34,13 +34,11 @@ export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 	try {
 		const tokenData = await exchangeCodeForToken(code, PUBLIC_HACKATIME_OAUTH_REDIRECT_URL);
 
-		const { error: dbError } = await supabase
-			.from('hackatime_connections')
-			.upsert({
-				user_id: locals.user.id,
-				access_token: tokenData.access_token,
-				updated_at: new Date().toISOString()
-			});
+		const { error: dbError } = await supabase.from('hackatime_connections').upsert({
+			user_id: locals.user.id,
+			access_token: tokenData.access_token,
+			updated_at: new Date().toISOString()
+		});
 
 		if (dbError) {
 			console.error('Failed to store Hackatime token:', dbError);

@@ -12,6 +12,71 @@ export interface SlackProject {
 	multiplier?: number;
 }
 
+export function buildRejectionModal(
+	projectId: string,
+	stage: 'first_round' | 'final',
+	triggerId: string,
+	channelId: string,
+	messageTs: string
+) {
+	return {
+		trigger_id: triggerId,
+		view: {
+			type: 'modal',
+			callback_id: 'project_reject_submission',
+			private_metadata: JSON.stringify({
+				projectId,
+				stage,
+				channelId,
+				messageTs
+			}),
+			title: {
+				type: 'plain_text',
+				text: 'Reject Project'
+			},
+			submit: {
+				type: 'plain_text',
+				text: 'Reject'
+			},
+			close: {
+				type: 'plain_text',
+				text: 'Cancel'
+			},
+			blocks: [
+				{
+					type: 'input',
+					block_id: 'reviewer_message_block',
+					element: {
+						type: 'plain_text_input',
+						action_id: 'reviewer_message_input',
+						multiline: true,
+						placeholder: {
+							type: 'plain_text',
+							text: 'Explain why this project was rejected.'
+						}
+					},
+					label: {
+						type: 'plain_text',
+						text: 'Reviewer message (required)'
+					}
+				}
+			]
+		}
+	};
+}
+
+export function buildResolvedReviewBlocks(text: string) {
+	return [
+		{
+			type: 'section',
+			text: {
+				type: 'mrkdwn',
+				text
+			}
+		}
+	];
+}
+
 export function buildProjectReviewBlocks(project: SlackProject, isFinalStage: boolean = false) {
 	const reviewerText = project.reviewer_slack_id ? `\n*Reviewed by:* <@${project.reviewer_slack_id}>` : '';
 	const multiplierText = project.multiplier ? `\n*Multiplier:* ${project.multiplier}x` : '';
@@ -35,22 +100,27 @@ export function buildProjectReviewBlocks(project: SlackProject, isFinalStage: bo
 
 	if (!isFinalStage) {
 		blocks.push({
+			dispatch_action: true,
+			type: 'input',
+			element: {
+				type: 'plain_text_input',
+				action_id: `assign_multiplier|${project.id}`,
+				dispatch_action_config: {
+					trigger_actions_on: ['on_enter_pressed']
+				},
+				placeholder: {
+					type: 'plain_text',
+					text: 'e.g. 1.5'
+				}
+			},
+			label: {
+				type: 'plain_text',
+				text: 'Approve with Multiplier (1 to 2.5, press Enter)'
+			}
+		});
+		blocks.push({
 			type: 'actions',
 			elements: [
-				{
-					type: 'static_select',
-					placeholder: {
-						type: 'plain_text',
-						text: 'Assign Multiplier',
-						emoji: true
-					},
-					options: [
-						{ text: { type: 'plain_text', text: '1x' }, value: '1' },
-						{ text: { type: 'plain_text', text: '2x' }, value: '2' },
-						{ text: { type: 'plain_text', text: '3x' }, value: '3' }
-					],
-					action_id: `assign_multiplier|${project.id}`
-				},
 				{
 					type: 'button',
 					text: {

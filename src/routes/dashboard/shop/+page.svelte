@@ -3,7 +3,7 @@
 	import { enhance } from '$app/forms';
 
 	const { data } = $props();
-	
+
 	let loadingId = $state<string | null>(null);
 
 	const getStatusIcon = (status: string) => {
@@ -40,20 +40,30 @@
 		<div class="flex flex-col gap-3">
 			{#each data.userRedemptions as order}
 				{@const Icon = getStatusIcon(order.status)}
-				<div class="flex items-center justify-between rounded-xl bg-white/10 p-4 border border-white/15 backdrop-blur-md">
+				<div
+					class="flex items-center justify-between rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-md"
+				>
 					<div class="flex items-center gap-4">
 						{#if order.shop_items?.image_url}
-							<img src={order.shop_items.image_url} alt={order.shop_items.name} class="h-12 w-12 object-contain" />
+							<img
+								src={order.shop_items.image_url}
+								alt={order.shop_items.name}
+								class="h-12 w-12 object-contain"
+							/>
 						{:else}
 							<ShoppingCart class="h-8 w-8 text-white/40" />
 						{/if}
 						<div>
 							<h3 class="font-bold text-white">{order.shop_items?.name || 'Unknown Item'}</h3>
-							<p class="text-xs text-white/60">{new Date(order.redeemed_at).toLocaleDateString()}</p>
+							<p class="text-xs text-white/60">
+								{new Date(order.redeemed_at).toLocaleDateString()}
+							</p>
 						</div>
 					</div>
 					<div class="flex flex-col items-end gap-1">
-						<div class={`flex items-center gap-2 font-bold capitalize ${getStatusColor(order.status)}`}>
+						<div
+							class={`flex items-center gap-2 font-bold capitalize ${getStatusColor(order.status)}`}
+						>
 							<Icon size={16} />
 							{order.status}
 						</div>

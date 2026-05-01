@@ -12,7 +12,7 @@
 		const target = e.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
 			fileName = target.files[0].name;
-			attachmentUrl = ''; 
+			attachmentUrl = '';
 		}
 	}
 
@@ -72,17 +72,18 @@
 				required
 				rows={6}
 				placeholder="Write a few sentences about what you worked on..."
-				class="field-input rounded-tl-none rounded-[14px]"
+				class="field-input rounded-[14px] rounded-tl-none"
 			></textarea>
 		</div>
 
 		<div class="rounded-xl border border-blue-400/20 bg-blue-400/10 p-4">
-			<div class="flex items-center gap-2 mb-1">
+			<div class="mb-1 flex items-center gap-2">
 				<Clock size={16} class="text-blue-300" />
 				<span class="text-sm font-bold text-white">Automated Time Tracking</span>
 			</div>
-			<p class="text-xs text-white/60 leading-relaxed">
-				Current session: <span class="font-bold text-blue-200">{data.suggestedHours}h</span> will be logged from your linked Hackatime projects.
+			<p class="text-xs leading-relaxed text-white/60">
+				Current session: <span class="font-bold text-blue-200">{data.suggestedHours}h</span> will be logged
+				from your linked Hackatime projects.
 			</p>
 		</div>
 
@@ -116,7 +117,8 @@
 				</div>
 			</div>
 			<p class="mt-2 text-xs leading-snug text-white/35">
-				Show your project's output. A dev log MUST have an image or screenshot to be valid for shipping.
+				Show your project's output. A dev log MUST have an image or screenshot to be valid for
+				shipping.
 			</p>
 		</div>
 
