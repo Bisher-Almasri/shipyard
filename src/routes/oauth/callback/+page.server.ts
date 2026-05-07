@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 
 	try {
 		const redirectUri = new URL('/oauth/callback', url.origin).toString();
+		const isSecure = url.protocol === 'https:';
 
 		const params = new URLSearchParams({
 			client_id: publicEnv.PUBLIC_HC_OAUTH_CLIENT_ID,
@@ -58,7 +59,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 			httpOnly: true,
 			path: '/',
 			sameSite: 'lax',
-			secure: true,
+			secure: isSecure,
 			maxAge: tokenData.expires_in
 		});
 
@@ -66,7 +67,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 			httpOnly: true,
 			path: '/',
 			sameSite: 'lax',
-			secure: true
+			secure: isSecure
 		});
 
 		const apiRes = await fetch('https://auth.hackclub.com/api/v1/me', {
@@ -137,7 +138,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 			httpOnly: true,
 			path: '/',
 			sameSite: 'lax',
-			secure: true,
+			secure: isSecure,
 			maxAge: 30 * 24 * 60 * 60
 		});
 
@@ -146,7 +147,7 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 		if (e?.status === 302) {
 			throw e;
 		}
-		console.error('OAuth callback crash:', e);
+		console.error('OAuth callback crash:', e, e?.stack);
 		throw redirect(302, '/2err');
 	}
 };
