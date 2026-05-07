@@ -50,7 +50,7 @@
 		<div
 			class="ship-sailing pointer-events-none absolute right-[5%] bottom-2.5 z-10 w-[70%] opacity-90 md:right-[10%] md:bottom-5 md:w-[40%]"
 		>
-			<img src="/tall-ship.svg" alt="Tall Ship" class="h-auto w-full drop-shadow-2xl" />
+			<img src="/hacker ship.png" alt="Tall Ship" class="h-auto w-256px drop-shadow-2xl" />
 		</div>
 
 		<div class="absolute bottom-0 left-0 z-20 w-full overflow-hidden leading-none">
