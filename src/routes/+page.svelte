@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { env } from '$env/dynamic/public';
 </script>
 
@@ -36,8 +35,10 @@
 				<button
 					class="rounded-xl bg-[#4FA4FF] px-10 py-4 text-3xl font-bold text-white shadow-[0px_6px_0px_0px_#2d7fd5] transition-all hover:translate-y-1 hover:bg-[#3d93ef] hover:shadow-none active:translate-y-1.5 active:shadow-none"
 					onclick={() => {
+						const redirectUri = `${window.location.origin}/oauth/callback`;
+
 						window.open(
-							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${env.PUBLIC_HC_OAUTH_REDIRECT_URL}&response_type=code&scope=profile basic_info phone birthdate address`,
+							`https://auth.hackclub.com/oauth/authorize?client_id=${env.PUBLIC_HC_OAUTH_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=profile basic_info phone birthdate address`,
 							'_self'
 						);
 					}}

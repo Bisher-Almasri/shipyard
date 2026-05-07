@@ -32,7 +32,8 @@ export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 	}
 
 	try {
-		const tokenData = await exchangeCodeForToken(code, publicEnv.PUBLIC_HACKATIME_OAUTH_REDIRECT_URL);
+		const redirectUri = new URL('/dashboard/hackatime/callback', url.origin).toString();
+		const tokenData = await exchangeCodeForToken(code, redirectUri);
 
 		const { error: dbError } = await supabase.from('hackatime_connections').upsert({
 			user_id: locals.user.id,

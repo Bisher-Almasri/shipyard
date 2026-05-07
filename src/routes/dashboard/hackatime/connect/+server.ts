@@ -1,9 +1,10 @@
-import { env as publicEnv } from '$env/dynamic/public';
 import { redirect } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ cookies, locals }) => {
+import { env as publicEnv } from '$env/dynamic/public';
+
+export const GET: RequestHandler = async ({ cookies, locals, url }) => {
 	if (!locals.user) {
 		throw redirect(302, '/');
 	}
@@ -26,9 +27,11 @@ export const GET: RequestHandler = async ({ cookies, locals }) => {
 		maxAge: 60 * 5
 	});
 
+	const redirectUri = new URL('/dashboard/hackatime/callback', url.origin).toString();
+
 	const params = new URLSearchParams({
 		client_id: publicEnv.PUBLIC_HACKATIME_CLIENT_UID,
-		redirect_uri: publicEnv.PUBLIC_HACKATIME_OAUTH_REDIRECT_URL,
+		redirect_uri: redirectUri,
 		response_type: 'code',
 		scope: 'profile read',
 		state

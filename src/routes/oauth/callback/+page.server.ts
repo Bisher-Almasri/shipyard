@@ -28,10 +28,12 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 	}
 
 	try {
+		const redirectUri = new URL('/oauth/callback', url.origin).toString();
+
 		const params = new URLSearchParams({
 			client_id: publicEnv.PUBLIC_HC_OAUTH_CLIENT_ID,
 			client_secret: privateEnv.PRIVATE_HC_OAUTH_CLIENT_SECRET,
-			redirect_uri: publicEnv.PUBLIC_HC_OAUTH_REDIRECT_URL,
+			redirect_uri: redirectUri,
 			code,
 			grant_type: 'authorization_code'
 		});
