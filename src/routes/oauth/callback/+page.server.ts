@@ -1,5 +1,5 @@
-import { PUBLIC_HC_OAUTH_CLIENT_ID, PUBLIC_HC_OAUTH_REDIRECT_URL } from '$env/static/public';
-import { PRIVATE_HC_OAUTH_CLIENT_SECRET } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env as privateEnv } from '$env/dynamic/private';
 import { redirect, error } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
 import type { PageServerLoad } from './$types';
@@ -29,9 +29,9 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 
 	try {
 		const params = new URLSearchParams({
-			client_id: PUBLIC_HC_OAUTH_CLIENT_ID,
-			client_secret: PRIVATE_HC_OAUTH_CLIENT_SECRET,
-			redirect_uri: PUBLIC_HC_OAUTH_REDIRECT_URL,
+			client_id: publicEnv.PUBLIC_HC_OAUTH_CLIENT_ID,
+			client_secret: privateEnv.PRIVATE_HC_OAUTH_CLIENT_SECRET,
+			redirect_uri: publicEnv.PUBLIC_HC_OAUTH_REDIRECT_URL,
 			code,
 			grant_type: 'authorization_code'
 		});

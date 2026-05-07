@@ -1,7 +1,4 @@
-import {
-	PUBLIC_HACKATIME_CLIENT_UID,
-	PUBLIC_HACKATIME_OAUTH_REDIRECT_URL
-} from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 import { redirect } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
 import type { RequestHandler } from './$types';
@@ -30,8 +27,8 @@ export const GET: RequestHandler = async ({ cookies, locals }) => {
 	});
 
 	const params = new URLSearchParams({
-		client_id: PUBLIC_HACKATIME_CLIENT_UID,
-		redirect_uri: PUBLIC_HACKATIME_OAUTH_REDIRECT_URL,
+		client_id: publicEnv.PUBLIC_HACKATIME_CLIENT_UID,
+		redirect_uri: publicEnv.PUBLIC_HACKATIME_OAUTH_REDIRECT_URL,
 		response_type: 'code',
 		scope: 'profile read',
 		state

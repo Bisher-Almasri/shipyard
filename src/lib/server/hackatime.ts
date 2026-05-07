@@ -1,5 +1,5 @@
-import { PUBLIC_HACKATIME_CLIENT_UID } from '$env/static/public';
-import { PRIVATE_HACKATIME_CLIENT_SECRET } from '$env/static/private';
+import { env as publicEnv } from '$env/dynamic/public';
+import { env as privateEnv } from '$env/dynamic/private';
 
 export interface HackatimeTokenResponse {
 	access_token: string;
@@ -42,8 +42,8 @@ const BASE_URL = 'https://hackatime.hackclub.com';
 
 export async function exchangeCodeForToken(code: string, redirectUri: string) {
 	const params = new URLSearchParams({
-		client_id: PUBLIC_HACKATIME_CLIENT_UID,
-		client_secret: PRIVATE_HACKATIME_CLIENT_SECRET,
+		client_id: publicEnv.PUBLIC_HACKATIME_CLIENT_UID,
+		client_secret: privateEnv.PRIVATE_HACKATIME_CLIENT_SECRET,
 		code,
 		redirect_uri: redirectUri,
 		grant_type: 'authorization_code'

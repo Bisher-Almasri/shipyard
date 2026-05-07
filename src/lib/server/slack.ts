@@ -1,4 +1,4 @@
-import { SLACK_BOT_TOKEN } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 export interface SlackProject {
 	id: string;
@@ -168,14 +168,14 @@ export function buildProjectReviewBlocks(project: SlackProject, isFinalStage: bo
 }
 
 export async function sendSlackMessage(channel: string, text: string, blocks?: any[]) {
-	if (!SLACK_BOT_TOKEN) return;
+	if (!env.SLACK_BOT_TOKEN) return;
 
 	try {
 		const res = await fetch('https://slack.com/api/chat.postMessage', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${SLACK_BOT_TOKEN}`
+					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({
 				channel,
@@ -195,14 +195,14 @@ export async function sendSlackMessage(channel: string, text: string, blocks?: a
 }
 
 export async function updateSlackMessage(channel: string, ts: string, text: string, blocks?: any[]) {
-	if (!SLACK_BOT_TOKEN) return;
+	if (!env.SLACK_BOT_TOKEN) return;
 
 	try {
 		const res = await fetch('https://slack.com/api/chat.update', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${SLACK_BOT_TOKEN}`
+					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({
 				channel,

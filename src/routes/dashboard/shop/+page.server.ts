@@ -1,10 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { supabase } from '$lib/supabaseClient';
-import {
-	SLACK_BOT_TOKEN,
-	SLACK_SHOP_CHANNEL_ID,
-	SLACK_REVIEW_CHANNEL_ID
-} from '$env/static/private';
+import { env as privateEnv } from '$env/dynamic/private';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -109,11 +105,11 @@ export const actions: Actions = {
 		console.log('Redemption recorded:', redemption.id);
 
 		console.log('Attempting to send Slack notification...');
-		const slackChannel = SLACK_SHOP_CHANNEL_ID || SLACK_REVIEW_CHANNEL_ID;
+		const slackChannel = privateEnv.SLACK_SHOP_CHANNEL_ID || privateEnv.SLACK_REVIEW_CHANNEL_ID;
 		console.log('Target Channel:', slackChannel);
-		console.log('Token starts with:', SLACK_BOT_TOKEN?.substring(0, 5));
+		console.log('Token starts with:', privateEnv.SLACK_BOT_TOKEN?.substring(0, 5));
 
-		if (SLACK_BOT_TOKEN && slackChannel) {
+		if (privateEnv.SLACK_BOT_TOKEN && slackChannel) {
 			const slackUserHandle = user.hackclub_id ? `<@${user.hackclub_id}>` : `*${user.name}*`;
 			const slackMsg = `🚨 *New Shop Purchase!* 🚨\n${slackUserHandle} just bought *${item.name}*!`;
 
@@ -122,7 +118,7 @@ export const actions: Actions = {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						Authorization: `Bearer ${SLACK_BOT_TOKEN}`
+						Authorization: `Bearer ${privateEnv.SLACK_BOT_TOKEN}`
 					},
 					body: JSON.stringify({
 						channel: slackChannel,

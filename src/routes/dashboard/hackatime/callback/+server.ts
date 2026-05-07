@@ -1,4 +1,4 @@
-import { PUBLIC_HACKATIME_OAUTH_REDIRECT_URL } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 import { redirect, error } from '@sveltejs/kit';
 import { exchangeCodeForToken } from '$lib/server/hackatime';
 import { supabase } from '$lib/supabaseClient';
@@ -32,7 +32,7 @@ export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 	}
 
 	try {
-		const tokenData = await exchangeCodeForToken(code, PUBLIC_HACKATIME_OAUTH_REDIRECT_URL);
+		const tokenData = await exchangeCodeForToken(code, publicEnv.PUBLIC_HACKATIME_OAUTH_REDIRECT_URL);
 
 		const { error: dbError } = await supabase.from('hackatime_connections').upsert({
 			user_id: locals.user.id,
