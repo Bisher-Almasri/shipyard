@@ -107,6 +107,11 @@ function getHackclubId(userRelation: any): string {
 
 export const POST: RequestHandler = async ({ request }) => {
 	let payloadStr = '';
+	const requestId = crypto.randomUUID();
+	console.log('[slack:interactivity] request received', {
+		requestId,
+		contentType: request.headers.get('content-type') || 'unknown'
+	});
 	try {
 		const formData = await request.formData();
 		payloadStr = formData.get('payload') as string;
@@ -129,6 +134,15 @@ export const POST: RequestHandler = async ({ request }) => {
 	} catch {
 		return json({ error: 'Invalid JSON payload' }, { status: 400 });
 	}
+
+	console.log('[slack:interactivity] parsed payload', {
+		requestId,
+		type: payload?.type || 'unknown',
+		callbackId: payload?.view?.callback_id || null,
+		actionId: payload?.actions?.[0]?.action_id || null,
+		userId: payload?.user?.id || null,
+		channelId: payload?.channel?.id || null
+	});
 
 	if (payload.type === 'view_submission' && payload.view?.callback_id === 'project_reject_submission') {
 		const reviewerMessage = getRejectedModalMessage(payload);

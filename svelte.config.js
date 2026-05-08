@@ -11,7 +11,10 @@ const config = {
 	kit: {
 		adapter: adapter({
 			bodySize: 10 * 1024 * 1024 // 10MB limit for large image uploads
-		})
+		}),
+		csrf: {
+			trustedOrigins: ['https://slack.com', 'https://app.slack.com']
+		}
 	},
 	extensions: ['.svelte', '.svx']
 };
