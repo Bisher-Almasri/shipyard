@@ -11,7 +11,7 @@
 <div class="text-center">
 	<h1 class="m-0 mb-2 font-marker text-4xl text-white max-md:text-3xl">Leaderboard</h1>
 	<p class="m-0 mb-8 text-xl font-bold text-white max-md:mb-6 max-md:text-base">
-		Celebrating our most active shipbuilders
+		Most shipped hours (with multiplier) 
 	</p>
 </div>
 
@@ -50,9 +50,9 @@
 			<div class="flex flex-col items-end">
 				<div class="flex items-center gap-1.5 text-xl font-bold text-white">
 					<Star size={16} class="fill-yellow-400 text-yellow-400" />
-					{user.cargo_points.toLocaleString()}
+					{user.weighted_hours.toFixed(1)}
 				</div>
-				<span class="text-xs font-medium text-white/40">Cargo Points</span>
+				<span class="text-xs font-medium text-white/40">Weighted Hours</span>
 			</div>
 		</div>
 	{:else}
