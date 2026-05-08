@@ -2,6 +2,15 @@
 	import { env } from '$env/dynamic/public';
 </script>
 
+
+<svelte:head>
+	<title>Landing | Shipyard</title>
+	<meta
+		name="description"
+		content="Shipyard - A Hack Club YSWS "
+	/>
+</svelte:head>
+
 <div
 	class="min-h-screen overflow-x-hidden scroll-smooth font-gaegu text-white selection:bg-yellow-400 selection:text-black"
 >
