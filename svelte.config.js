@@ -13,7 +13,9 @@ const config = {
 			bodySize: 10 * 1024 * 1024 // 10MB limit for large image uploads
 		}),
 		csrf: {
-			trustedOrigins: ['https://slack.com', 'https://app.slack.com']
+			// Slack interactivity sends form posts without an Origin header in production.
+			// We validate authenticity using Slack request signatures in the endpoint.
+			checkOrigin: false
 		}
 	},
 	extensions: ['.svelte', '.svx']

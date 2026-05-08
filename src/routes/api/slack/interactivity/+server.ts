@@ -1,11 +1,40 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
 import { env } from '$env/dynamic/private';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
 	buildProjectReviewBlocks,
 	buildRejectionModal,
 	buildResolvedReviewBlocks
 } from '$lib/server/slack';
+
+function verifySlackSignature(request: Request, rawBody: string): boolean {
+	const signingSecret = env.SLACK_SIGNING_SECRET;
+	if (!signingSecret) {
+		console.warn('[slack:interactivity] SLACK_SIGNING_SECRET is not set; skipping signature check');
+		return true;
+	}
+
+	const signature = request.headers.get('x-slack-signature') || '';
+	const timestamp = request.headers.get('x-slack-request-timestamp') || '';
+
+	if (!signature || !timestamp) return false;
+
+	const timestampNumber = Number(timestamp);
+	if (!Number.isFinite(timestampNumber)) return false;
+
+	const fiveMinutes = 60 * 5;
+	if (Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) > fiveMinutes) return false;
+
+	const base = `v0:${timestamp}:${rawBody}`;
+	const expected = `v0=${createHmac('sha256', signingSecret).update(base).digest('hex')}`;
+
+	try {
+		return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+	} catch {
+		return false;
+	}
+}
 
 async function postEphemeral(channelId: string, userId: string, text: string) {
 	if (!env.SLACK_BOT_TOKEN || !channelId || !userId) return;
@@ -108,16 +137,24 @@ function getHackclubId(userRelation: any): string {
 export const POST: RequestHandler = async ({ request }) => {
 	let payloadStr = '';
 	const requestId = crypto.randomUUID();
+	const contentType = request.headers.get('content-type') || 'unknown';
 	console.log('[slack:interactivity] request received', {
 		requestId,
-		contentType: request.headers.get('content-type') || 'unknown'
+		contentType
 	});
-	try {
-		const formData = await request.formData();
-		payloadStr = formData.get('payload') as string;
-	} catch {
+
+	const rawBody = await request.text();
+	if (!verifySlackSignature(request, rawBody)) {
+		console.error('[slack:interactivity] invalid signature', { requestId });
+		return json({ error: 'Invalid Slack signature' }, { status: 401 });
+	}
+
+	if (contentType.includes('application/x-www-form-urlencoded')) {
+		const params = new URLSearchParams(rawBody);
+		payloadStr = params.get('payload') || '';
+	} else {
 		try {
-			const body = await request.json();
+			const body = JSON.parse(rawBody || '{}');
 			payloadStr = body.payload ? body.payload : JSON.stringify(body);
 		} catch {
 			return json({ error: 'Invalid payload' }, { status: 400 });
