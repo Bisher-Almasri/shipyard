@@ -38,6 +38,24 @@ export interface HackatimeProject {
 	archived: boolean;
 }
 
+export interface HackatimePeriodProject {
+	name: string;
+	total_seconds: number;
+	percent?: number;
+	digital?: string;
+	text?: string;
+	hours?: number;
+	minutes?: number;
+	seconds?: number;
+}
+
+export interface HackatimeLast7DaysStats {
+	data: {
+		total_seconds: number;
+		projects: HackatimePeriodProject[];
+	};
+}
+
 const BASE_URL = 'https://hackatime.hackclub.com';
 
 export async function exchangeCodeForToken(code: string, redirectUri: string) {
@@ -127,4 +145,18 @@ export async function getHackatimeProjects(accessToken: string, includeArchived 
 
 	const data = (await res.json()) as { projects: HackatimeProject[] };
 	return data.projects;
+}
+
+export async function getHackatimeLast7DaysStats(accessToken: string) {
+	const res = await fetch(`${BASE_URL}/api/hackatime/v1/users/current/stats/last_7_days`, {
+		headers: {
+			Authorization: `Bearer ${accessToken}`
+		}
+	});
+
+	if (!res.ok) {
+		throw new Error(`Failed to fetch last 7 days stats: ${await res.text()}`);
+	}
+
+	return (await res.json()) as HackatimeLast7DaysStats;
 }

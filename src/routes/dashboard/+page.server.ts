@@ -1,6 +1,9 @@
 import type { PageServerLoad } from './$types';
 import { supabase } from '$lib/supabaseClient';
-import { getHackatimeHours, getHackatimeStreak } from '$lib/server/hackatime';
+import {
+	getHackatimeLast7DaysStats,
+	getHackatimeStreak
+} from '$lib/server/hackatime';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user!;
@@ -22,6 +25,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.select('*', { count: 'exact', head: true })
 		.eq('user_id', user.id);
 
+	const { data: projects } = await supabase
+		.from('projects')
+		.select('hackatime_projects')
+		.eq('user_id', user.id);
+
+	const linkedHackatimeProjects = new Set(
+		(projects || []).flatMap((project) => project.hackatime_projects || [])
+	);
+
 	const { data: hackatimeConnection } = await supabase
 		.from('hackatime_connections')
 		.select('access_token')
@@ -33,12 +45,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (hackatimeConnection) {
 		try {
 			const [hours, streak] = await Promise.all([
-				getHackatimeHours(hackatimeConnection.access_token),
+				linkedHackatimeProjects.size > 0
+					? getHackatimeLast7DaysStats(hackatimeConnection.access_token)
+					: Promise.resolve(null),
 				getHackatimeStreak(hackatimeConnection.access_token)
 			]);
 
+			const linkedSeconds =
+				hours?.data.projects.reduce((total, project) => {
+					return linkedHackatimeProjects.has(project.name)
+						? total + (Number(project.total_seconds) || 0)
+						: total;
+					}, 0) || 0;
+
 			hackatimeStats = {
-				hours: (hours.total_seconds / 3600).toFixed(1),
+				hours: (linkedSeconds / 3600).toFixed(1),
 				streak: streak.streak_days
 			};
 		} catch (e) {

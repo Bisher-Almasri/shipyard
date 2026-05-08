@@ -102,7 +102,7 @@ async function dmUser(slackId: string, text: string) {
 async function syncAirtable(projectId: string) {
 	try {
 		const { syncProjectToAirtable } = await import('$lib/server/airtable');
-		syncProjectToAirtable(projectId);
+		await syncProjectToAirtable(projectId);
 	} catch (e) {
 		console.error('Failed to sync project to Airtable:', e);
 	}
@@ -440,6 +440,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				.select('hours')
 				.eq('project_id', project.id);
 			const totalHours = (posts || []).reduce((acc, p) => acc + (Number(p.hours) || 0), 0);
+			const payoutHours = Math.min(totalHours, 10);
 
 			let jobPoints = 0;
 			if (project.selected_job_id) {
@@ -452,7 +453,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 
 			const multiplier = Number(project.multiplier);
-			const payout = Math.round((totalHours * multiplier + jobPoints) / 2);
+			const payout = Math.round((payoutHours * multiplier + jobPoints) / 2);
 			const awardedAt = new Date().toISOString();
 
 			const { data: payoutGuardProject } = await supabase
@@ -497,7 +498,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 			await syncAirtable(targetId);
 
-			const breakdown = `Hours: (${totalHours.toFixed(1)} x ${multiplier} + Job: ${jobPoints}) / 2 (beta) = ${payout}`;
+			const breakdown = `Hours: (${totalHours.toFixed(1)} total, capped to ${payoutHours.toFixed(1)} x ${multiplier} + Job: ${jobPoints}) / 2 (beta) = ${payout}`;
 			const replyText = `Project <${project.repo_url || ''}|${project.title}> was *final approved* by <@${reviewerId}>.\n*Payout:* ${breakdown}`;
 			await updateReviewMessage(channelId, messageTs, replyText);
 			await dmUser(

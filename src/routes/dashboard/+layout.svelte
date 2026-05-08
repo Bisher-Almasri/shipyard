@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { House, LayoutGrid, Trophy, ShoppingCart, Compass } from 'lucide-svelte';
+	import { House, LayoutGrid, Trophy, ShoppingCart, Compass, LogOut } from 'lucide-svelte';
 
 	const { data, children } = $props();
 
@@ -86,17 +86,32 @@
 				{/each}
 			</nav>
 
-			<a
-				href="/dashboard/profile"
-				class="flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-[#B8E4FF] bg-[#3BB1FF] transition-all duration-200 hover:scale-105 max-md:h-10 max-md:w-10 max-md:rounded-lg"
-				aria-label="Profile"
-			>
-				<img
-					src={data.user.avatar || '/pfp.png'}
-					alt="Profile"
-					class="h-full w-full object-cover"
-				/>
-			</a>
+			<details class="relative mt-3 max-md:mt-0">
+				<summary
+					class="flex h-12 w-12 cursor-pointer list-none items-center justify-center overflow-hidden rounded-xl border-2 border-[#B8E4FF] bg-[#3BB1FF] transition-all duration-200 hover:scale-105 max-md:h-10 max-md:w-10 max-md:rounded-lg"
+					aria-label="Account menu"
+				>
+					<img
+						src={data.user.avatar || '/pfp.png'}
+						alt="Account"
+						class="h-full w-full object-cover"
+					/>
+				</summary>
+
+				<div
+					class="absolute left-full bottom-0 ml-3 w-44 rounded-2xl border-2 border-[#B8E4FF] bg-white p-2 shadow-xl max-md:left-0 max-md:bottom-full max-md:ml-0 max-md:mb-3 max-md:w-40"
+				>
+					<form method="POST" action="/logout">
+						<button
+							type="submit"
+							class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-[#1F5390] transition-colors hover:bg-[#4FA4FF]/10"
+						>
+							<LogOut size={18} />
+							<span>Log out</span>
+						</button>
+					</form>
+				</div>
+			</details>
 		</aside>
 
 		<main class="flex min-h-0 min-w-0 flex-1 max-md:order-1">
@@ -110,6 +125,14 @@
 </div>
 
 <style>
+	summary {
+		list-style: none;
+	}
+
+	summary::-webkit-details-marker {
+		display: none;
+	}
+
 	.active {
 		background: #4fa4ff;
 		color: white;
