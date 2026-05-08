@@ -1,8 +1,35 @@
 import { env as privateEnv } from '$env/dynamic/private';
+import sharp from 'sharp';
 
 export async function uploadImage(file: File): Promise<string> {
+	let fileToUpload = file;
+
+	// Compress image if it's larger than 500KB
+	if (file.size > 500 * 1024) {
+		try {
+			const buffer = await file.arrayBuffer();
+			const compressedBuffer = await sharp(buffer)
+				.resize(1920, 1080, {
+					fit: 'inside',
+					withoutEnlargement: true
+				})
+				.webp({ quality: 80 })
+				.toBuffer();
+
+			// Create a new File object from the compressed buffer
+			fileToUpload = new File([compressedBuffer], file.name.replace(/\.[^/.]+$/, '.webp'), {
+				type: 'image/webp'
+			});
+
+			console.log(`Image compressed: ${file.size} bytes → ${compressedBuffer.length} bytes`);
+		} catch (err) {
+			console.warn('Failed to compress image, uploading original:', err);
+			// Continue with original file if compression fails
+		}
+	}
+
 	const formData = new FormData();
-	formData.append('file', file);
+	formData.append('file', fileToUpload);
 
 	const response = await fetch('https://cdn.hackclub.com/api/v4/upload', {
 		method: 'POST',

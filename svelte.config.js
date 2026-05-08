@@ -8,7 +8,11 @@ const config = {
 	// for more information about preprocessors
 	preprocess: [vitePreprocess(), mdsvex()],
 
-	kit: { adapter: adapter() },
+	kit: {
+		adapter: adapter({
+			bodySize: 10 * 1024 * 1024 // 10MB limit for large image uploads
+		})
+	},
 	extensions: ['.svelte', '.svx']
 };
 
