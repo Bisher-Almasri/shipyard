@@ -8,6 +8,7 @@ declare global {
 				id: string;
 				hackclub_id: string;
 				name: string;
+				slack_name: string | null;
 				email: string;
 				avatar: string;
 				cargo_points: number;

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hackclub_id VARCHAR UNIQUE NOT NULL,
     name VARCHAR NOT NULL,
+    slack_name VARCHAR,
     email VARCHAR NOT NULL,
     avatar VARCHAR,
     address JSONB,

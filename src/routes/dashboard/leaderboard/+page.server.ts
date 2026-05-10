@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async () => {
 	const [{ data: users, error: usersError }, { data: projects, error: projectsError }] =
 		await Promise.all([
-			supabase.from('users').select('id, name, avatar'),
+			supabase.from('users').select('id, name, slack_name, avatar, hackclub_id'),
 			supabase
 				.from('projects')
 				.select('id, user_id, multiplier, posts(hours)')
@@ -35,14 +35,45 @@ export const load: PageServerLoad = async () => {
 		);
 	}
 
-	const leaderboard = (users || [])
+	const rawLeaderboard = (users || [])
 		.map((user) => ({
+			id: user.id,
 			name: user.name,
+			slack_name: user.slack_name,
+			hackclub_id: user.hackclub_id,
 			avatar: user.avatar,
 			weighted_hours: weightedHoursByUser.get(user.id) || 0
 		}))
 		.sort((a, b) => b.weighted_hours - a.weighted_hours)
 		.slice(0, 10);
+
+	// Fetch missing slack_names for top 10
+	const { getSlackUsername } = await import('$lib/server/slack');
+	const leaderboard = await Promise.all(
+		rawLeaderboard.map(async (user) => {
+			if (!user.slack_name && user.hackclub_id) {
+				const fetchedName = await getSlackUsername(user.hackclub_id);
+				if (fetchedName) {
+					// Update DB in background (don't await for faster response if you want, 
+					// but here we might as well ensure the user sees it)
+					await supabase
+						.from('users')
+						.update({ slack_name: fetchedName })
+						.eq('id', user.id);
+					return {
+						name: fetchedName,
+						avatar: user.avatar,
+						weighted_hours: user.weighted_hours
+					};
+				}
+			}
+			return {
+				name: user.slack_name || "no slack name",
+				avatar: user.avatar,
+				weighted_hours: user.weighted_hours
+			};
+		})
+	);
 
 	return {
 		users: leaderboard

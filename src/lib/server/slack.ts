@@ -221,3 +221,26 @@ export async function updateSlackMessage(channel: string, ts: string, text: stri
 		console.error('Failed to update Slack message:', e);
 	}
 }
+
+export async function getSlackUsername(slackId: string): Promise<string | null> {
+	if (!env.SLACK_BOT_TOKEN || !slackId) return null;
+
+	try {
+		const res = await fetch(`https://slack.com/api/users.info?user=${slackId}`, {
+			headers: {
+				Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
+			}
+		});
+
+		const data = await res.json();
+		if (!data.ok) {
+			console.error('Slack API Error (users.info):', data.error);
+			return null;
+		}
+
+		return data.user?.profile.display_name ||data.user?.name ||  "no slack name";
+	} catch (e) {
+		console.error('Failed to fetch Slack user info:', e);
+		return null;
+	}
+}

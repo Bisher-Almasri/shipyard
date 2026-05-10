@@ -88,6 +88,16 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 
 		const hackclubId = user.slack_id || user.id || Object.values(user)[0]?.toString() || '';
 		const name = user.first_name + ' ' + user.last_name || 'Unknown Hacker';
+		
+		let slackName = name;
+		if (user.slack_id) {
+			const { getSlackUsername } = await import('$lib/server/slack');
+			const fetchedSlackName = await getSlackUsername(user.slack_id);
+			if (fetchedSlackName) {
+				slackName = fetchedSlackName;
+			}
+		}
+
 		const email = user.primary_email || '';
 		const avatar = `https://cachet.dunkirk.sh/users/${user.slack_id}/r`;
 
