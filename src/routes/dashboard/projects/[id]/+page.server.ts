@@ -120,7 +120,7 @@ export const actions: Actions = {
 		// Fetch dev logs for validation
 		const { data: posts } = await supabase
 			.from('posts')
-			.select('id, attachment')
+			.select('id, attachment, hours')
 			.eq('project_id', projectId);
 
 		if (!posts || posts.length === 0) {
@@ -163,12 +163,16 @@ export const actions: Actions = {
 			.eq('id', challengeId)
 			.single();
 
+		const totalHours = (posts || []).reduce((acc, post) => acc + (Number(post.hours) || 0), 0);
+
 		if (env.SLACK_BOT_TOKEN && env.SLACK_REVIEW_CHANNEL_ID) {
 			const blocks = buildProjectReviewBlocks({
 				id: project.id,
 				title: project.title,
 				description: project.description,
 				repo_url: project.repo_url || undefined,
+				playable_url: finalPlayableUrl || undefined,
+				hours: totalHours,
 				user_name: project.users?.name || 'Unknown',
 				user_slack_id: project.users?.hackclub_id || '',
 				challenge_title: challenge?.title || 'Unknown'

@@ -5,6 +5,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
 	buildProjectReviewBlocks,
 	buildRejectionModal,
+	buildApprovalModal,
 	buildResolvedReviewBlocks
 } from '$lib/server/slack';
 
@@ -126,6 +127,19 @@ function getRejectedModalMessage(payload: any): string {
 	);
 }
 
+function getApprovalModalNotes(payload: any): string {
+	return (
+		payload?.view?.state?.values?.reviewer_notes_block?.reviewer_notes_input?.value?.trim() || ''
+	);
+}
+
+function getApprovalModalMultiplier(payload: any): number | null {
+	const value = payload?.view?.state?.values?.multiplier_block?.multiplier_input?.value?.trim();
+	if (!value) return null;
+	const multiplier = parseFloat(value);
+	return isNaN(multiplier) ? null : multiplier;
+}
+
 function getHackclubId(userRelation: any): string {
 	if (Array.isArray(userRelation)) {
 		return userRelation[0]?.hackclub_id || '';
@@ -212,7 +226,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			.from('projects')
 			.select('id, title, status, review_stage, users(hackclub_id)')
 			.eq('id', projectId)
-			.single();
+			.single() as any;
 
 		if (!project) {
 			return json({
@@ -242,7 +256,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			updateData.final_reviewer_slack_id = reviewerId;
 		}
 
-		await supabase.from('projects').update(updateData).eq('id', projectId);
+		await (supabase.from('projects') as any).update(updateData).eq('id', projectId);
 		await syncAirtable(projectId);
 
 		const replyText = `Project *${project.title}* was *rejected* by <@${reviewerId}>.\n*Reviewer message:* ${reviewerMessage}`;
@@ -251,6 +265,196 @@ export const POST: RequestHandler = async ({ request }) => {
 			getHackclubId(project.users),
 			`Your project *${project.title}* was rejected.\n\nReviewer message:\n${reviewerMessage}`
 		);
+
+		return json({ response_action: 'clear' });
+	}
+
+	if (payload.type === 'view_submission' && payload.view?.callback_id === 'project_approve_submission') {
+		const reviewerNotes = getApprovalModalNotes(payload);
+		const reviewerId = payload.user?.id;
+		const metadata = JSON.parse(payload.view.private_metadata || '{}');
+		const projectId = metadata.projectId as string;
+		const stage = metadata.stage as 'first_round' | 'final';
+		const channelId = metadata.channelId as string;
+		const messageTs = metadata.messageTs as string;
+		const multiplier = metadata.multiplier as number;
+
+		if (!projectId || !reviewerId || !stage) {
+			return json({
+				response_action: 'errors',
+				errors: {
+					reviewer_notes_block: 'Missing required review metadata. Please try again.'
+				}
+			});
+		}
+
+		const { data: project } = await supabase
+			.from('projects')
+			.select('id, title, status, review_stage, repo_url, selected_job_id, multiplier, description, playable_url, users(hackclub_id, name), posts(hours)')
+			.eq('id', projectId)
+			.single() as any;
+
+		if (!project) {
+			return json({
+				response_action: 'errors',
+				errors: {
+					reviewer_notes_block: 'Project not found. Please refresh and try again.'
+				}
+			});
+		}
+
+		if (project.review_stage !== stage || project.status !== 'shipped') {
+			return json({
+				response_action: 'errors',
+				errors: {
+					reviewer_notes_block: 'This review action is stale and can no longer be applied.'
+				}
+			});
+		}
+
+		if (stage === 'first_round') {
+			// First round approval - advance to final review
+			await (supabase.from('projects') as any).update({
+				multiplier,
+				review_stage: 'final',
+				first_reviewer_slack_id: reviewerId,
+				last_reviewer_message: reviewerNotes || null
+			})
+				.eq('id', projectId);
+
+			let challengeTitle = 'Unknown';
+			if (project.selected_job_id) {
+				const { data: challenge } = await supabase
+					.from('jobs')
+					.select('title')
+					.eq('id', project.selected_job_id)
+					.single() as any;
+				challengeTitle = challenge?.title || 'Unknown';
+			}
+
+			const totalHours = (project.posts || []).reduce((acc: number, p: any) => acc + (Number(p.hours) || 0), 0);
+
+			await fetch('https://slack.com/api/chat.postMessage', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
+				},
+				body: JSON.stringify({
+					channel: env.SLACK_FINAL_REVIEW_CHANNEL_ID,
+					text: `Project awaiting final review: ${project.title}`,
+					blocks: buildProjectReviewBlocks(
+						{
+							id: project.id,
+							title: project.title,
+							description: project.description,
+							repo_url: project.repo_url || undefined,
+							playable_url: project.playable_url || undefined,
+							user_name: project.users?.name || 'Unknown',
+							user_slack_id: project.users?.hackclub_id || '',
+							challenge_title: challengeTitle,
+							reviewer_slack_id: reviewerId,
+							multiplier,
+							hours: totalHours
+						},
+						true
+					)
+				})
+			});
+
+			const replyText = `Project <${project.repo_url || ''}|${project.title}> passed first review with *${multiplier}x* by <@${reviewerId}>.\n*Reviewer notes:* ${reviewerNotes || 'None'}`;
+			await updateReviewMessage(channelId, messageTs, replyText);
+			await dmUser(
+				getHackclubId(project.users),
+				`Your project *${project.title}* passed first-round review with *${multiplier}x* and is now in final review.\n\n*Reviewer notes:* ${reviewerNotes || 'None'}`
+			);
+		} else {
+			// Final round approval
+			const editedMultiplier = getApprovalModalMultiplier(payload);
+			const newMultiplier = editedMultiplier !== null ? editedMultiplier : project.multiplier;
+
+			// Validate multiplier if edited
+			if (editedMultiplier !== null) {
+				if (isNaN(editedMultiplier) || editedMultiplier < 1 || editedMultiplier > 2.5) {
+					return json({
+						response_action: 'errors',
+						errors: {
+							multiplier_block: 'Multiplier must be between 1 and 2.5.'
+						}
+					});
+				}
+			}
+
+			const { data: posts } = await supabase
+				.from('posts')
+				.select('hours')
+				.eq('project_id', project.id) as any;
+			const totalHours = (posts || []).reduce((acc: number, p: any) => acc + (Number(p.hours) || 0), 0);
+			const payoutHours = Math.min(totalHours, 10);
+
+			let jobPoints = 0;
+			if (project.selected_job_id) {
+				const { data: job } = await supabase
+					.from('jobs')
+					.select('points')
+					.eq('id', project.selected_job_id)
+					.single() as any;
+				jobPoints = Number(job?.points) || 0;
+			}
+
+			const finalMultiplier = Number(newMultiplier) || 1;
+			const payout = Math.round((payoutHours * 5 * finalMultiplier + jobPoints) / 2);
+			const awardedAt = new Date().toISOString();
+
+			const { data: payoutGuardProject } = await (supabase.from('projects') as any)
+				.update({
+					status: 'approved',
+					final_reviewer_slack_id: reviewerId,
+					last_reviewer_message: reviewerNotes || null,
+					multiplier: finalMultiplier,
+					payout_awarded_at: awardedAt
+				})
+				.eq('id', projectId)
+				.is('payout_awarded_at', null)
+				.select('id, user_id, title, users(hackclub_id)')
+				.single() as any;
+
+			if (!payoutGuardProject) {
+				await postEphemeral(channelId, reviewerId, 'Payout was already awarded for this project.');
+				return new Response(null, { status: 200 });
+			}
+
+			const { data: userRow } = await supabase
+				.from('users')
+				.select('cargo_points')
+				.eq('id', payoutGuardProject.user_id)
+				.single() as any;
+
+			const nextBalance = (Number(userRow?.cargo_points) || 0) + payout;
+			const { error: userUpdateError } = await (supabase.from('users') as any)
+				.update({ cargo_points: nextBalance })
+				.eq('id', payoutGuardProject.user_id);
+
+			if (userUpdateError) {
+				await (supabase.from('projects') as any)
+					.update({ payout_awarded_at: null, status: 'shipped' })
+					.eq('id', projectId)
+					.eq('payout_awarded_at', awardedAt);
+				await postEphemeral(channelId, reviewerId, 'Could not award payout. Please retry.');
+				return new Response(null, { status: 200 });
+			}
+
+			await syncAirtable(projectId);
+
+			const multiplierNote = editedMultiplier !== null ? ` (edited from ${project.multiplier}x to ${finalMultiplier}x)` : '';
+			const breakdown = `Hours: (${totalHours.toFixed(1)} total, capped to ${payoutHours.toFixed(1)} x 5 x ${finalMultiplier}) + Job: ${jobPoints} = ${payout}`;
+			const replyText = `Project <${project.repo_url || ''}|${project.title}> was *final approved* by <@${reviewerId}>.\n*Final Reviewer Hour Modifier:* ${finalMultiplier}x${multiplierNote}\n*Payout:* ${breakdown}${reviewerNotes ? `\n*Reviewer notes:* ${reviewerNotes}` : ''}`;
+			await updateReviewMessage(channelId, messageTs, replyText);
+			await dmUser(
+				getHackclubId(payoutGuardProject.users),
+				`Your project *${project.title}* was final-approved.\n*Final Reviewer Hour Modifier:* ${finalMultiplier}x${multiplierNote}\nPayout credited: *${payout}* cargo points.\n(${breakdown})${reviewerNotes ? `\n\n*Reviewer notes:* ${reviewerNotes}` : ''}`
+			);
+		}
 
 		return json({ response_action: 'clear' });
 	}
@@ -273,7 +477,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				.from('user_redemptions')
 				.select('*, users(hackclub_id), shop_items(name)')
 				.eq('id', targetId)
-				.single();
+				.single() as any;
 
 			if (!redemption) {
 				return json({ error: 'Redemption not found' }, { status: 404 });
@@ -290,7 +494,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				replyText = `Shop item *${redemption.shop_items?.name}* for <@${redemption.users?.hackclub_id || redemption.user_id}> was marked as *delivered* by <@${reviewerId}> ✅.`;
 			}
 
-			await supabase.from('user_redemptions').update({ status: newStatus }).eq('id', targetId);
+			await (supabase.from('user_redemptions') as any).update({ status: newStatus }).eq('id', targetId);
 
 			if (newStatus === 'shipped') {
 				await dmUser(
@@ -312,7 +516,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			.from('projects')
 			.select('*, users(hackclub_id)')
 			.eq('id', targetId)
-			.single();
+			.single() as any;
 
 		if (!project) {
 			return json({ error: 'Project not found' }, { status: 404 });
@@ -343,58 +547,22 @@ export const POST: RequestHandler = async ({ request }) => {
 				return new Response(null, { status: 200 });
 			}
 
-			await supabase
-				.from('projects')
-				.update({
-					multiplier,
-					review_stage: 'final',
-					first_reviewer_slack_id: reviewerId,
-					last_reviewer_message: null
-				})
-				.eq('id', targetId);
-
-			let challengeTitle = 'Unknown';
-			if (project.selected_job_id) {
-				const { data: challenge } = await supabase
-					.from('jobs')
-					.select('title')
-					.eq('id', project.selected_job_id)
-					.single();
-				challengeTitle = challenge?.title || 'Unknown';
+			if (!env.SLACK_BOT_TOKEN || !payload.trigger_id) {
+				await postEphemeral(channelId, reviewerId, 'Cannot open approval form. Missing Slack metadata.');
+				return new Response(null, { status: 200 });
 			}
 
-			await fetch('https://slack.com/api/chat.postMessage', {
+			await fetch('https://slack.com/api/views.open', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 				},
-				body: JSON.stringify({
-					channel: env.SLACK_FINAL_REVIEW_CHANNEL_ID,
-					text: `Project awaiting final review: ${project.title}`,
-					blocks: buildProjectReviewBlocks(
-						{
-							id: project.id,
-							title: project.title,
-							description: project.description,
-							repo_url: project.repo_url || undefined,
-							user_name: project.users?.name || 'Unknown',
-							user_slack_id: project.users?.hackclub_id || '',
-							challenge_title: challengeTitle,
-							reviewer_slack_id: reviewerId,
-							multiplier
-						},
-						true
-					)
-				})
+				body: JSON.stringify(
+					buildApprovalModal(targetId, 'first_round', payload.trigger_id, channelId, messageTs, multiplier)
+				)
 			});
 
-			const replyText = `Project <${project.repo_url || ''}|${project.title}> passed first review with *${multiplier}x* by <@${reviewerId}> and was sent to final review.`;
-			await updateReviewMessage(channelId, messageTs, replyText);
-			await dmUser(
-				project.users?.hackclub_id,
-				`Your project *${project.title}* passed first-round review with *${multiplier}x* and is now in final review.`
-			);
 			return new Response(null, { status: 200 });
 		}
 
@@ -435,76 +603,21 @@ export const POST: RequestHandler = async ({ request }) => {
 				return new Response(null, { status: 200 });
 			}
 
-			const { data: posts } = await supabase
-				.from('posts')
-				.select('hours')
-				.eq('project_id', project.id);
-			const totalHours = (posts || []).reduce((acc, p) => acc + (Number(p.hours) || 0), 0);
-			const payoutHours = Math.min(totalHours, 10);
-
-			let jobPoints = 0;
-			if (project.selected_job_id) {
-				const { data: job } = await supabase
-					.from('jobs')
-					.select('points')
-					.eq('id', project.selected_job_id)
-					.single();
-				jobPoints = Number(job?.points) || 0;
-			}
-
-			const multiplier = Number(project.multiplier);
-			const payout = Math.round((payoutHours * multiplier + jobPoints) / 2);
-			const awardedAt = new Date().toISOString();
-
-			const { data: payoutGuardProject } = await supabase
-				.from('projects')
-				.update({
-					status: 'approved',
-					final_reviewer_slack_id: reviewerId,
-					last_reviewer_message: null,
-					payout_awarded_at: awardedAt
-				})
-				.eq('id', targetId)
-				.is('payout_awarded_at', null)
-				.select('id, user_id, title, users(hackclub_id)')
-				.single();
-
-			if (!payoutGuardProject) {
-				await postEphemeral(channelId, reviewerId, 'Payout was already awarded for this project.');
+			if (!env.SLACK_BOT_TOKEN || !payload.trigger_id) {
+				await postEphemeral(channelId, reviewerId, 'Cannot open approval form. Missing Slack metadata.');
 				return new Response(null, { status: 200 });
 			}
 
-			const { data: userRow } = await supabase
-				.from('users')
-				.select('cargo_points')
-				.eq('id', payoutGuardProject.user_id)
-				.single();
-
-			const nextBalance = (Number(userRow?.cargo_points) || 0) + payout;
-			const { error: userUpdateError } = await supabase
-				.from('users')
-				.update({ cargo_points: nextBalance })
-				.eq('id', payoutGuardProject.user_id);
-
-			if (userUpdateError) {
-				await supabase
-					.from('projects')
-					.update({ payout_awarded_at: null, status: 'shipped' })
-					.eq('id', targetId)
-					.eq('payout_awarded_at', awardedAt);
-				await postEphemeral(channelId, reviewerId, 'Could not award payout. Please retry.');
-				return new Response(null, { status: 200 });
-			}
-
-			await syncAirtable(targetId);
-
-			const breakdown = `Hours: (${totalHours.toFixed(1)} total, capped to ${payoutHours.toFixed(1)} x ${multiplier} + Job: ${jobPoints}) / 2 (beta) = ${payout}`;
-			const replyText = `Project <${project.repo_url || ''}|${project.title}> was *final approved* by <@${reviewerId}>.\n*Payout:* ${breakdown}`;
-			await updateReviewMessage(channelId, messageTs, replyText);
-			await dmUser(
-				getHackclubId(payoutGuardProject.users),
-				`Your project *${project.title}* was final-approved.\nPayout credited: *${payout}* cargo points.\n(${breakdown})`
-			);
+			await fetch('https://slack.com/api/views.open', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
+				},
+				body: JSON.stringify(
+					buildApprovalModal(targetId, 'final', payload.trigger_id, channelId, messageTs)
+				)
+			});
 
 			return new Response(null, { status: 200 });
 		}

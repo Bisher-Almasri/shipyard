@@ -4,8 +4,8 @@ export interface SlackProject {
 	id: string;
 	title: string;
 	description: string;
-	repo_url?: string;
-	user_name: string;
+	repo_url?: string;	playable_url?: string;
+	hours?: number;	user_name: string;
 	user_slack_id: string;
 	challenge_title: string;
 	reviewer_slack_id?: string;
@@ -44,6 +44,13 @@ export function buildRejectionModal(
 			},
 			blocks: [
 				{
+					type: 'section',
+					text: {
+						type: 'mrkdwn',
+						text: '*Please provide feedback on the following aspects:*'
+					}
+				},
+				{
 					type: 'input',
 					block_id: 'reviewer_message_block',
 					element: {
@@ -65,6 +72,93 @@ export function buildRejectionModal(
 	};
 }
 
+export function buildApprovalModal(
+	projectId: string,
+	stage: 'first_round' | 'final',
+	triggerId: string,
+	channelId: string,
+	messageTs: string,
+	multiplier?: number
+) {
+	const blocks: any[] = [
+		{
+			type: 'section',
+			text: {
+				type: 'mrkdwn',
+				text: '*Please provide your feedback on this project:*'
+			}
+		}
+	];
+
+	// Add multiplier input for final stage
+	if (stage === 'final' && multiplier) {
+		blocks.push({
+			type: 'input',
+			block_id: 'multiplier_block',
+			element: {
+				type: 'plain_text_input',
+				action_id: 'multiplier_input',
+				initial_value: String(multiplier),
+				placeholder: {
+					type: 'plain_text',
+					text: 'e.g. 1.5'
+				}
+			},
+			label: {
+				type: 'plain_text',
+				text: 'Multiplier (can edit if needed)'
+			}
+		});
+	}
+
+	blocks.push({
+		type: 'input',
+		block_id: 'reviewer_notes_block',
+		element: {
+			type: 'plain_text_input',
+			action_id: 'reviewer_notes_input',
+			multiline: true,
+			placeholder: {
+				type: 'plain_text',
+				text: 'Share your feedback and notes (optional)'
+			}
+		},
+		label: {
+			type: 'plain_text',
+			text: 'Reviewer notes (optional)'
+		},
+		optional: true
+	});
+
+	return {
+		trigger_id: triggerId,
+		view: {
+			type: 'modal',
+			callback_id: 'project_approve_submission',
+			private_metadata: JSON.stringify({
+				projectId,
+				stage,
+				channelId,
+				messageTs,
+				multiplier
+			}),
+			title: {
+				type: 'plain_text',
+				text: 'Approve Project'
+			},
+			submit: {
+				type: 'plain_text',
+				text: 'Approve'
+			},
+			close: {
+				type: 'plain_text',
+				text: 'Cancel'
+			},
+			blocks
+		}
+	};
+}
+
 export function buildResolvedReviewBlocks(text: string) {
 	return [
 		{
@@ -79,21 +173,26 @@ export function buildResolvedReviewBlocks(text: string) {
 
 export function buildProjectReviewBlocks(project: SlackProject, isFinalStage: boolean = false) {
 	const reviewerText = project.reviewer_slack_id ? `\n*Reviewed by:* <@${project.reviewer_slack_id}>` : '';
-	const multiplierText = project.multiplier ? `\n*Multiplier:* ${project.multiplier}x` : '';
+	const multiplierText =
+		project.multiplier !== undefined && project.multiplier !== null
+			? `\n*${isFinalStage ? 'Final Reviewer Hour Modifier' : 'Multiplier'}:* ${project.multiplier}x`
+			: '';
+	const hoursText =
+		project.hours !== undefined && project.hours !== null ? `\n*Hours Logged:* ${project.hours}` : '';
 
 	const blocks: any[] = [
 		{
 			type: 'section',
 			text: {
 				type: 'mrkdwn',
-				text: `*Project Shipped: ${project.title}*\n*Challenge:* ${project.challenge_title}\n*User:* <@${project.user_slack_id}>${reviewerText}${multiplierText}`
+				text: `*Project Shipped: ${project.title}*\n*Challenge:* ${project.challenge_title}\n*User:* <@${project.user_slack_id}>${reviewerText}${multiplierText}${hoursText}`
 			}
 		},
 		{
 			type: 'section',
 			text: {
 				type: 'mrkdwn',
-				text: `*Description:*\n${project.description}\n*Repo URL:*\n${project.repo_url || 'N/A'}`
+				text: `*Description:*\n${project.description}\n*Repo URL:*\n${project.repo_url || 'N/A'}${project.playable_url ? `\n*Playable Link:*\n${project.playable_url}` : ''}`
 			}
 		}
 	];
