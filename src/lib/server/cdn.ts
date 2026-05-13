@@ -1,7 +1,13 @@
 import { env as privateEnv } from '$env/dynamic/private';
 import sharp from 'sharp';
 
+export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 export async function uploadImage(file: File): Promise<string> {
+	if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+		throw new Error('Image must be 10 MB or smaller.');
+	}
+
 	let fileToUpload = file;
 
 	// Compress image if it's larger than 500KB

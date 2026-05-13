@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { LayoutGrid, Plus, BookOpen, Clock, X, Upload } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
+	import { toast } from '$lib/toast';
 
 	const { data } = $props();
+
+	const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 	let showNewProjectModal = $state(false);
 	let fileName = $state('');
@@ -11,7 +14,15 @@
 	function handleFileChange(e: Event) {
 		const target = e.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
-			fileName = target.files[0].name;
+			const file = target.files[0];
+			if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+				target.value = '';
+				fileName = '';
+				toast.error('Image must be 10 MB or smaller.');
+				return;
+			}
+
+			fileName = file.name;
 			headerImgUrl = '';
 		}
 	}

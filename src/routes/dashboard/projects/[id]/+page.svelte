@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, Clock, ArrowLeft, Plus, Pencil, LayoutGrid, Rocket } from 'lucide-svelte';
+	import { BookOpen, Clock, ArrowLeft, Plus, Pencil, LayoutGrid, Rocket, X } from 'lucide-svelte';
 	import Post from '$lib/components/Post.svelte';
 	import { toast } from '$lib/toast';
 	import { enhance } from '$app/forms';
@@ -183,12 +183,13 @@
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
 		role="dialog"
 		aria-modal="true"
+		aria-labelledby="edit-project-title"
 	>
 		<div
 			class="modal-slide-in w-full max-w-lg rounded-3xl border border-white/20 bg-gradient-to-b from-[#2A68B0] to-[#1F5390] p-6 shadow-2xl"
 		>
 			<div class="mb-5 flex items-center justify-between">
-				<h2 class="m-0 font-marker text-2xl text-white">Edit Project</h2>
+				<h2 id="edit-project-title" class="m-0 font-marker text-2xl text-white">Edit Project</h2>
 				<button
 					onclick={() => (showEditModal = false)}
 					class="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
@@ -239,6 +240,7 @@
 						name="repo_url"
 						type="url"
 						value={data.project.repo_url || ''}
+						required
 						class="field-input"
 					/>
 				</div>
@@ -258,10 +260,12 @@
 					<button
 						type="button"
 						onclick={() => (showEditModal = false)}
-						class="flex-1 rounded-xl border border-white/20 bg-white/10 py-2.5 font-bold text-white"
+						class="flex-1 rounded-xl border border-white/20 bg-white/10 py-2.5 font-bold text-white transition-all hover:bg-white/18"
 						>Cancel</button
 					>
-					<button type="submit" class="flex-1 rounded-xl bg-white py-2.5 font-bold text-[#1F5390]"
+					<button
+						type="submit"
+						class="flex-1 rounded-xl bg-white py-2.5 font-bold text-[#1F5390] transition-all hover:scale-[1.02] hover:bg-white/90 active:scale-95"
 						>Save Changes</button
 					>
 				</div>
@@ -271,6 +275,44 @@
 {/if}
 
 <style>
+	.field-input {
+		width: 100%;
+		background: rgba(255, 255, 255, 0.1);
+		border: 1.5px solid rgba(255, 255, 255, 0.2);
+		border-radius: 14px;
+		padding: 0.65rem 1rem;
+		color: white;
+		font-family: inherit;
+		font-size: 0.95rem;
+		outline: none;
+		transition:
+			border-color 0.15s,
+			background 0.15s;
+		resize: none;
+		box-sizing: border-box;
+	}
+	.field-input::placeholder {
+		color: rgba(255, 255, 255, 0.3);
+	}
+	.field-input:focus {
+		border-color: rgba(184, 228, 255, 0.55);
+		background: rgba(255, 255, 255, 0.14);
+	}
+
+	.modal-slide-in {
+		animation: modal-in 0.2s ease-out;
+	}
+	@keyframes modal-in {
+		from {
+			opacity: 0;
+			transform: translateY(14px) scale(0.97);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
 	/* ── Project banner ───────────────────────────────────── */
 	.project-banner {
 		position: relative;

@@ -101,6 +101,19 @@ export const actions: Actions = {
 
 		if (!project) return fail(403, { message: 'Project not found or access denied' });
 
+		// Validate all required fields
+		if (!project.title || project.title.trim() === '') {
+			return fail(400, { message: 'Project title is required to ship.' });
+		}
+
+		if (!project.description || project.description.trim() === '') {
+			return fail(400, { message: 'Project description is required to ship.' });
+		}
+
+		if (!project.repo_url || project.repo_url.trim() === '') {
+			return fail(400, { message: 'Repository URL is required to ship.' });
+		}
+
 		// Playable URL check
 		const finalPlayableUrl = playable_url || project.playable_url;
 		if (!finalPlayableUrl) {
