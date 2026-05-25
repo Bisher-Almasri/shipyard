@@ -1,15 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { env as publicEnv } from '$env/dynamic/public';
+import { env as privateEnv } from '$env/dynamic/private';
 
-let supabaseClient = null;
+let supabaseClient: ReturnType<typeof createClient> | null = null;
 
 function getSupabaseClient() {
 	if (!supabaseClient) {
 		const supabaseUrl = publicEnv.PUBLIC_SUPABASE_URL;
-		const supabaseKey = publicEnv.PUBLIC_SUPABASE_ANON_KEY;
+		const supabaseKey = privateEnv.SUPABASE_SERVICE_ROLE_KEY;
 
 		if (!supabaseUrl || !supabaseKey) {
-			throw new Error('Supabase env vars are required at runtime');
+			throw new Error('Supabase service env vars are required at runtime');
 		}
 
 		supabaseClient = createClient(supabaseUrl, supabaseKey);

@@ -100,38 +100,53 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 
 		const email = user.primary_email || '';
 		const avatar = `https://cachet.dunkirk.sh/users/${user.slack_id}/r`;
+		const address = Array.isArray(user.addresses) ? user.addresses[0] ?? null : user.addresses ?? null;
+		const birthday = typeof user.birthday === 'string' ? user.birthday : null;
 
 		if (!hackclubId) {
 			console.error('Could not determine hackclub_id from response:', user);
 			throw redirect(302, '/6err');
 		}
 
-		const { data: userData, error: userError } = await supabase
-			.from('users')
-			.upsert(
-				{
-					hackclub_id: hackclubId,
-					name,
-					email,
-					avatar,
-					address: user.addresses?.[0] || null,
-					birthday: user.birthday || null
-				},
-				{ onConflict: 'hackclub_id' }
-			)
-			.select()
-			.single();
+		const userPayload = {
+			hackclub_id: hackclubId,
+			name,
+			email,
+			avatar,
+			address,
+			birthday
+		};
+
+		const { data: existingUser, error: lookupError } = await (supabase.from('users') as any)
+			.select('id')
+			.eq('hackclub_id', hackclubId)
+			.limit(1)
+			.maybeSingle();
+
+		if (lookupError) {
+			console.error('Failed to look up user before save:', lookupError);
+			throw redirect(302, '/4err');
+		}
+
+		const userSave = existingUser
+			? await (supabase.from('users') as any).update(userPayload).eq('id', existingUser.id).select().single()
+			: await (supabase.from('users') as any).insert(userPayload).select().single();
+
+		const { data: userData, error: userError } = userSave;
 
 		if (userError || !userData) {
-			console.error('Failed to upsert user to Supabase:', userError);
+			console.error('Failed to save user to Supabase:', {
+				error: userError,
+				userPayload,
+				existingUser
+			});
 			throw redirect(302, '/4err');
 		}
 
 		const expiresAt = new Date();
 		expiresAt.setDate(expiresAt.getDate() + 30);
 
-		const { data: sessionData, error: sessionError } = await supabase
-			.from('sessions')
+		const { data: sessionData, error: sessionError } = await (supabase.from('sessions') as any)
 			.insert({
 				user_id: userData.id,
 				expires_at: expiresAt.toISOString()
