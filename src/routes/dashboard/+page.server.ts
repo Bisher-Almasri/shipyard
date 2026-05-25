@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { data: allJobs } = await supabase
 		.from('jobs')
 		.select('*')
+		.eq('active', true)
 		.order('created_at', { ascending: false });
 
 	const { data: userJobs } = await supabase
@@ -68,7 +69,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		jobs: allJobs || [],
+		jobs: (allJobs || []).filter((job) => !completedJobIds.has(job.id)),
 		completedJobIds: Array.from(completedJobIds),
 		stats: {
 			jobsCompleted: completedJobIds.size,

@@ -84,19 +84,13 @@
 	<h2 class="m-0 mb-5 font-marker text-2xl text-white drop-shadow-sm">Active Jobs</h2>
 	<div class="flex flex-col gap-4">
 		{#each data.jobs as job}
-			{@const isCompleted = data.completedJobIds.includes(job.id)}
 			{@const isMissed = new Date(job.deadline) < new Date()}
 			<div
 				class="relative rounded-2xl border border-white/15 bg-white/12 p-5 backdrop-blur-md transition-all duration-300 hover:border-white/25 hover:bg-white/18 hover:shadow-lg"
 			>
 				<div class="mb-3 flex items-start justify-between gap-4">
 					<h3 class="m-0 text-xl font-bold text-white max-md:text-lg">{job.title}</h3>
-					{#if isCompleted}
-						<span
-							class="shrink-0 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase"
-							>Completed</span
-						>
-					{:else if isMissed}
+					{#if isMissed}
 						<span
 							class="shrink-0 rounded-full bg-red-400 px-3 py-1 text-xs font-bold tracking-wide text-white uppercase"
 							>Missed</span

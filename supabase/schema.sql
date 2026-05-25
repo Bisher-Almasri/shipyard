@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     title VARCHAR NOT NULL,
     description TEXT,
     points INT NOT NULL,
+    active boolean
     deadline TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
