@@ -1,11 +1,17 @@
 <script lang="ts">
-	import { BookOpen, Clock, ArrowLeft, Plus, Pencil, LayoutGrid, Rocket, X } from 'lucide-svelte';
+	import { BookOpen, Clock, ArrowLeft, Plus, Pencil, LayoutGrid, Rocket, X, AlertCircle } from 'lucide-svelte';
 	import Post from '$lib/components/Post.svelte';
 	import { toast } from '$lib/toast';
 	import { enhance } from '$app/forms';
+	import { marked } from 'marked';
+	import DOMPurify from 'isomorphic-dompurify';
 
 	let { data, form: actionForm } = $props();
 	let showEditModal = $state(false);
+
+	let parsedDescription = $derived(
+		DOMPurify.sanitize(marked.parse(data.project.description || '', { async: false }) as string)
+	);
 
 	function formatDate(dateStr: string) {
 		return new Date(dateStr).toLocaleDateString('en-US', {
@@ -73,16 +79,24 @@
 			</div>
 
 			<div class="flex shrink-0 items-center gap-2">
-				{#if data.project.status === 'pending' || !data.project.status}
+				{#if data.project.status === 'rejected'}
+					<span
+						class="rounded-xl border border-red-400/30 bg-red-400/20 px-3 py-1.5 text-xs font-bold text-red-300"
+					>
+						Review Rejected
+					</span>
+				{/if}
+				{#if data.project.status === 'pending' || data.project.status === 'rejected' || !data.project.status}
 					<form method="POST" action="?/ship" use:enhance class="flex flex-col gap-2">
 						{#if data.availableJobs.length > 0}
 							<div class="flex items-center gap-2">
 								<select
 									name="challengeId"
 									required
+									value={data.project.selected_job_id || ''}
 									class="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white transition-all outline-none focus:border-white/40"
 								>
-									<option value="" disabled selected>Select Challenge</option>
+									<option value="" disabled>Select Challenge</option>
 									{#each data.availableJobs as job}
 										<option value={job.id}>{job.title} (+{job.points} pts)</option>
 									{/each}
@@ -100,7 +114,7 @@
 									class="flex items-center gap-1.5 rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white no-underline shadow-md transition-all hover:scale-105 hover:bg-green-400 active:scale-95"
 								>
 									<Rocket size={15} />
-									Ship It!
+									{data.project.status === 'rejected' ? 'Reship!' : 'Ship It!'}
 								</button>
 							</div>
 						{:else}
@@ -118,12 +132,6 @@
 						class="rounded-xl border border-green-400/30 bg-green-400/20 px-3 py-1.5 text-xs font-bold text-green-300"
 					>
 						Shipped & Approved ({data.project.multiplier}x)
-					</span>
-				{:else if data.project.status === 'rejected'}
-					<span
-						class="rounded-xl border border-red-400/30 bg-red-400/20 px-3 py-1.5 text-xs font-bold text-red-300"
-					>
-						Review Rejected
 					</span>
 				{/if}
 				<button
@@ -145,10 +153,19 @@
 			</div>
 		</div>
 
+		{#if data.project.status === 'rejected' && data.project.last_reviewer_message}
+			<div class="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 backdrop-blur-md">
+				<h3 class="m-0 mb-2 flex items-center gap-2 text-sm font-bold text-red-300">
+					<AlertCircle size={16} /> Reviewer Notes
+				</h3>
+				<p class="m-0 text-sm leading-relaxed text-red-200/90 whitespace-pre-wrap">{data.project.last_reviewer_message}</p>
+			</div>
+		{/if}
+
 		{#if data.project.description}
-			<p class="m-0 mt-4 text-sm leading-relaxed font-bold text-white/90">
-				{data.project.description}
-			</p>
+			<div class="m-0 mt-5 text-sm leading-relaxed text-white/90 prose prose-invert prose-sm max-w-none prose-p:my-2">
+				{@html parsedDescription}
+			</div>
 		{/if}
 	</div>
 </div>

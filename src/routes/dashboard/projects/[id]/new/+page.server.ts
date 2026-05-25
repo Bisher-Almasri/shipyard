@@ -1,6 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { supabase } from '$lib/supabaseClient';
 import { fail, redirect, error } from '@sveltejs/kit';
+ 
+const MAX_DEVLOG_DESCRIPTION_CHARS = 2000;
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const user = locals.user!;
@@ -41,8 +43,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 			const hoursLogged = (loggedPosts || []).reduce((acc, p) => acc + (Number(p.hours) || 0), 0);
 			suggestedHours = Math.max(0, totalHackatimeHours - hoursLogged);
-		} catch (e) {
+		} catch (e: any) {
 			console.error('Failed to calculate suggested hours:', e);
+			if (e.message?.includes('Unauthorized') || e.message?.includes('401')) {
+				await supabase
+					.from('hackatime_connections')
+					.delete()
+					.eq('user_id', user.id);
+			}
 		}
 	}
 
@@ -67,6 +75,12 @@ export const actions: Actions = {
 
 		if (!title || !description) {
 			return fail(400, { error: 'Title and description are required.' });
+		}
+
+		if (description.length > MAX_DEVLOG_DESCRIPTION_CHARS) {
+			return fail(400, {
+				error: `Devlog text must be ${MAX_DEVLOG_DESCRIPTION_CHARS} characters or fewer.`
+			});
 		}
 
 		// Re-fetch project and calculate hours automatically (no manual field)
@@ -112,8 +126,17 @@ export const actions: Actions = {
 					0
 				);
 				hours = Math.max(0, totalHackatimeHours - hoursLoggedAlready);
-			} catch (e) {
+			} catch (e: any) {
 				console.error('Failed to calculate hours on submission:', e);
+				if (e.message?.includes('Unauthorized') || e.message?.includes('401')) {
+					await supabase
+						.from('hackatime_connections')
+						.delete()
+						.eq('user_id', user.id);
+					return fail(401, {
+						error: 'Hackatime connection expired. Please reconnect in your dashboard.'
+					});
+				}
 			}
 		}
 

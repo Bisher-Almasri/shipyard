@@ -2,10 +2,13 @@
 	import { ArrowLeft, FileText, Image as ImageIcon, Upload, Clock } from 'lucide-svelte';
 	import { toast } from '$lib/toast';
 	import { enhance } from '$app/forms';
+ 	import type { PageData, ActionData } from './$types';
 
 	const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
+	const MAX_DEVLOG_DESCRIPTION_CHARS = 2000;
 
-	let { data, form: actionForm } = $props();
+	let { data, form: actionForm }: { data: PageData; form: ActionData } = $props();
+	const project = $derived(data.project as unknown as { id: string; title: string });
 
 	let fileName = $state('');
 	let attachmentUrl = $state('');
@@ -34,23 +37,23 @@
 </script>
 
 <svelte:head>
-	<title>New Dev Log — {data.project.title} | Shipyard</title>
-	<meta name="description" content="Add a dev log entry for {data.project.title}" />
+		<title>New Dev Log — {project.title} | Shipyard</title>
+		<meta name="description" content="Add a dev log entry for {project.title}" />
 </svelte:head>
 
 <a
-	href="/dashboard/projects/{data.project.id}"
+	href="/dashboard/projects/{project.id}"
 	class="mb-6 inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/15 px-3 py-2 text-sm font-bold text-white no-underline transition-all hover:bg-white/25 active:scale-95"
 >
 	<ArrowLeft size={15} />
-	Back to {data.project.title}
+	Back to {project.title}
 </a>
 
-{#if data.project}
+{#if project}
 	<div class="mb-6 text-center">
 		<h1 class="m-0 font-marker text-4xl text-white max-md:text-3xl">New Dev Log</h1>
 		<p class="m-0 mt-2 text-base font-bold text-white/60">
-			Logging for <span class="text-[#B8E4FF]">{data.project.title}</span>
+			Logging for <span class="text-[#B8E4FF]">{project.title}</span>
 		</p>
 	</div>
 {/if}
@@ -81,9 +84,13 @@
 				name="description"
 				required
 				rows={6}
+				maxlength={MAX_DEVLOG_DESCRIPTION_CHARS}
 				placeholder="Write a few sentences about what you worked on..."
 				class="field-input rounded-[14px] rounded-tl-none"
 			></textarea>
+			<p class="mt-2 text-xs text-white/40">
+				Keep it under {MAX_DEVLOG_DESCRIPTION_CHARS} characters.
+			</p>
 		</div>
 
 		<div class="rounded-xl border border-blue-400/20 bg-blue-400/10 p-4">
@@ -134,7 +141,7 @@
 
 		<div class="flex items-center gap-3 pt-1">
 			<a
-				href="/dashboard/projects/{data.project.id}"
+				href="/dashboard/projects/{project.id}"
 				class="flex-1 rounded-xl border border-white/20 bg-white/10 py-2.5 text-center font-bold text-white no-underline transition-all hover:bg-white/18"
 			>
 				Cancel

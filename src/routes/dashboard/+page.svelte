@@ -74,7 +74,7 @@
 				{data.hackatime?.hours ?? '0.0'}h
 			</span>
 			<span class="text-sm font-semibold text-white">
-				Linked Coding Time (7d) • {data.hackatime?.streak ?? 0}d streak
+				Total Linked Coding Time • {data.hackatime?.streak ?? 0}d streak
 			</span>
 		</div>
 	</div>

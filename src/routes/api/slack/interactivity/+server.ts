@@ -44,7 +44,7 @@ async function postEphemeral(channelId: string, userId: string, text: string) {
 		await fetch('https://slack.com/api/chat.postEphemeral', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json; charset=utf-8',
 				Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({
@@ -65,7 +65,7 @@ async function updateReviewMessage(channelId: string, ts: string, text: string) 
 		await fetch('https://slack.com/api/chat.update', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json; charset=utf-8',
 				Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({
@@ -87,7 +87,7 @@ async function dmUser(slackId: string, text: string) {
 		await fetch('https://slack.com/api/chat.postMessage', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json; charset=utf-8',
 				Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({
@@ -138,6 +138,13 @@ function getApprovalModalMultiplier(payload: any): number | null {
 	if (!value) return null;
 	const multiplier = parseFloat(value);
 	return isNaN(multiplier) ? null : multiplier;
+}
+
+function getApprovalModalHours(payload: any): number | null {
+	const value = payload?.view?.state?.values?.hours_block?.hours_input?.value?.trim();
+	if (!value) return null;
+	const hours = parseFloat(value);
+	return isNaN(hours) ? null : hours;
 }
 
 function getHackclubId(userRelation: any): string {
@@ -322,6 +329,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			})
 				.eq('id', projectId);
 
+			await syncAirtable(projectId);
+
 			let challengeTitle = 'Unknown';
 			if (project.selected_job_id) {
 				const { data: challenge } = await supabase
@@ -337,7 +346,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			await fetch('https://slack.com/api/chat.postMessage', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/json; charset=utf-8',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 				},
 				body: JSON.stringify({
@@ -372,6 +381,21 @@ export const POST: RequestHandler = async ({ request }) => {
 			// Final round approval
 			const editedMultiplier = getApprovalModalMultiplier(payload);
 			const newMultiplier = editedMultiplier !== null ? editedMultiplier : project.multiplier;
+			
+			const editedHours = getApprovalModalHours(payload);
+			const pMultiplier = Number(project.multiplier) || 1;
+
+			console.log('[final_approve] DEBUG:', {
+				editedMultiplier,
+				newMultiplier,
+				editedHours,
+				pMultiplier,
+				projectMultiplier: project.multiplier,
+				channelId,
+				messageTs,
+				stage,
+				reviewerId
+			});
 
 			// Validate multiplier if edited
 			if (editedMultiplier !== null) {
@@ -385,12 +409,25 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 			}
 
+			// Validate hours if edited
+			if (editedHours !== null) {
+				if (isNaN(editedHours) || editedHours < 0) {
+					return json({
+						response_action: 'errors',
+						errors: {
+							hours_block: 'Hours must be a positive number.'
+						}
+					});
+				}
+			}
+
 			const { data: posts } = await supabase
 				.from('posts')
 				.select('hours')
 				.eq('project_id', project.id) as any;
 			const totalHours = (posts || []).reduce((acc: number, p: any) => acc + (Number(p.hours) || 0), 0);
-			const payoutHours = Math.min(totalHours, 10);
+			const approvedHours = editedHours !== null ? editedHours : totalHours;
+			const payoutHours = Math.min(approvedHours, 10);
 
 			let jobPoints = 0;
 			if (project.selected_job_id) {
@@ -446,13 +483,37 @@ export const POST: RequestHandler = async ({ request }) => {
 
 			await syncAirtable(projectId);
 
-			const multiplierNote = editedMultiplier !== null ? ` (edited from ${project.multiplier}x to ${finalMultiplier}x)` : '';
-			const breakdown = `Hours: (${totalHours.toFixed(1)} total, capped to ${payoutHours.toFixed(1)} x 5 x ${finalMultiplier}) + Job: ${jobPoints} = ${payout}`;
-			const replyText = `Project <${project.repo_url || ''}|${project.title}> was *final approved* by <@${reviewerId}>.\n*Final Reviewer Hour Modifier:* ${finalMultiplier}x${multiplierNote}\n*Payout:* ${breakdown}${reviewerNotes ? `\n*Reviewer notes:* ${reviewerNotes}` : ''}`;
+			const multiplierNote = editedMultiplier !== null && editedMultiplier !== pMultiplier 
+				? ` (edited from ${pMultiplier}x to ${finalMultiplier}x)` 
+				: '';
+			const hoursNote = editedHours !== null && editedHours !== totalHours
+				? ` (edited from ${totalHours.toFixed(1)} to ${editedHours.toFixed(1)})`
+				: '';
+				
+			const breakdown = `Hours: (${approvedHours.toFixed(1)} approved, capped to ${payoutHours.toFixed(1)} x 5 x ${finalMultiplier}) + Job: ${jobPoints} = ${payout}`;
+			const replyText = `Project <${project.repo_url || ''}|${project.title}> was *final approved* by <@${reviewerId}>.\n*Final Reviewer Hour Modifier:* ${finalMultiplier}x${multiplierNote}\n*Approved Hours:* ${approvedHours}${hoursNote}\n*Payout:* ${breakdown}${reviewerNotes ? `\n*Reviewer notes:* ${reviewerNotes}` : ''}`;
+			
+			console.log('[final_approve] MESSAGE DEBUG:', {
+				replyText,
+				multiplierNote,
+				hoursNote,
+				approvedHours,
+				totalHours,
+				finalMultiplier,
+				payout,
+				channelId,
+				messageTs
+			});
+			
 			await updateReviewMessage(channelId, messageTs, replyText);
+
+			const dmHoursMsg = editedHours !== null && editedHours !== totalHours
+				? `\n\n*Note:* Unfortunately, only ${editedHours} hours were approved for this project.`
+				: '';
+
 			await dmUser(
 				getHackclubId(payoutGuardProject.users),
-				`Your project *${project.title}* was final-approved.\n*Final Reviewer Hour Modifier:* ${finalMultiplier}x${multiplierNote}\nPayout credited: *${payout}* cargo points.\n(${breakdown})${reviewerNotes ? `\n\n*Reviewer notes:* ${reviewerNotes}` : ''}`
+				`Your project *${project.title}* was final-approved.\n*Final Reviewer Hour Modifier:* ${finalMultiplier}x${multiplierNote}\n*Approved Hours:* ${approvedHours}${hoursNote}\nPayout credited: *${payout}* cargo points.\n(${breakdown})${reviewerNotes ? `\n\n*Reviewer notes:* ${reviewerNotes}` : ''}${dmHoursMsg}`
 			);
 		}
 
@@ -555,7 +616,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			await fetch('https://slack.com/api/views.open', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/json; charset=utf-8',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 				},
 				body: JSON.stringify(
@@ -581,7 +642,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			await fetch('https://slack.com/api/views.open', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/json; charset=utf-8',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 				},
 				body: JSON.stringify(
@@ -608,14 +669,20 @@ export const POST: RequestHandler = async ({ request }) => {
 				return new Response(null, { status: 200 });
 			}
 
+			const { data: posts } = await supabase
+				.from('posts')
+				.select('hours')
+				.eq('project_id', project.id) as any;
+			const totalHours = (posts || []).reduce((acc: number, p: any) => acc + (Number(p.hours) || 0), 0);
+
 			await fetch('https://slack.com/api/views.open', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/json; charset=utf-8',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 				},
 				body: JSON.stringify(
-					buildApprovalModal(targetId, 'final', payload.trigger_id, channelId, messageTs)
+					buildApprovalModal(targetId, 'final', payload.trigger_id, channelId, messageTs, project.multiplier, totalHours)
 				)
 			});
 

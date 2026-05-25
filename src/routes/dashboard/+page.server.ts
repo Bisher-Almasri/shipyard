@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { supabase } from '$lib/supabaseClient';
 import {
-	getHackatimeLast7DaysStats,
+	getHackatimeProjects,
 	getHackatimeStreak
 } from '$lib/server/hackatime';
 
@@ -44,25 +44,25 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (hackatimeConnection) {
 		try {
-			const [hours, streak] = await Promise.all([
+			const [projectsData, streak] = await Promise.all([
 				linkedHackatimeProjects.size > 0
-					? getHackatimeLast7DaysStats(hackatimeConnection.access_token)
-					: Promise.resolve(null),
+					? getHackatimeProjects(hackatimeConnection.access_token)
+					: Promise.resolve([]),
 				getHackatimeStreak(hackatimeConnection.access_token)
 			]);
 
 			const linkedSeconds =
-				hours?.data.projects.reduce((total, project) => {
+				projectsData.reduce((total, project) => {
 					return linkedHackatimeProjects.has(project.name)
 						? total + (Number(project.total_seconds) || 0)
 						: total;
-					}, 0) || 0;
+				}, 0);
 
 			hackatimeStats = {
 				hours: (linkedSeconds / 3600).toFixed(1),
 				streak: streak.streak_days
 			};
-		} catch (e) {
+		} catch (e: any) {
 			console.error('Failed to fetch Hackatime stats:', e);
 		}
 	}

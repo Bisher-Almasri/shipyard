@@ -56,7 +56,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.eq('user_id', user.id);
 
 	const completedJobIds = new Set((completedJobs || []).map((j) => j.job_id));
-	const availableJobs = (jobs || []).filter((j) => !completedJobIds.has(j.id));
+	const availableJobs = (jobs || []).filter((j) => !completedJobIds.has(j.id) || j.id === project.selected_job_id);
 
 	return {
 		project,
@@ -88,7 +88,7 @@ export const actions: Actions = {
 			.eq('job_id', challengeId)
 			.single();
 
-		if (existingCompletion) {
+		if (existingCompletion && project.selected_job_id !== challengeId) {
 			return fail(400, { message: 'You have already completed this challenge. Choose a different one.' });
 		}
 
@@ -124,8 +124,7 @@ export const actions: Actions = {
 		if (user.id !== project.user_id) return fail(403, { message: 'Unauthorized' });
 		if (
 			project.status === 'shipped' ||
-			project.status === 'approved' ||
-			project.status === 'rejected'
+			project.status === 'approved'
 		) {
 			return fail(400, { message: 'Project already shipped or reviewed' });
 		}
@@ -146,10 +145,12 @@ export const actions: Actions = {
 		}
 
 		// Mark challenge as completed
-		await supabase.from('user_jobs').insert({
-			user_id: user.id,
-			job_id: challengeId
-		});
+		if (!existingCompletion) {
+			await supabase.from('user_jobs').insert({
+				user_id: user.id,
+				job_id: challengeId
+			});
+		}
 
 		// Update to shipped
 		await supabase
@@ -166,8 +167,8 @@ export const actions: Actions = {
 			})
 			.eq('id', projectId);
 
-		// Sync to Airtable
-		await syncProjectToAirtable(projectId);
+		// Sync to Airtable (moved to after first review round)
+		// await syncProjectToAirtable(projectId);
 
 		// Fetch challenge details for Slack message
 		const { data: challenge } = await supabase
@@ -195,7 +196,7 @@ export const actions: Actions = {
 				const res = await fetch('https://slack.com/api/chat.postMessage', {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json',
+						'Content-Type': 'application/json; charset=utf-8',
 						Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 					},
 					body: JSON.stringify({

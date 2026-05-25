@@ -1,0 +1,24 @@
+{
+  "type": "view_submission",
+  "user": { "id": "U_TEST_REVIEWER" },
+  "view": {
+    "callback_id": "project_approve_submission",
+    "private_metadata": "{\"projectId\":\"REPLACE_ME\",\"stage\":\"final\",\"channelId\":\"C_TEST\",\"messageTs\":\"123.456\",\"multiplier\":1.5}",
+    "state": {
+      "values": {
+        "multiplier_block": {
+          "multiplier_input": {
+            "type": "plain_text_input",
+            "value": "2.5"
+          }
+        },
+        "hours_block": {
+          "hours_input": {
+            "type": "plain_text_input",
+            "value": "15"
+          }
+        }
+      }
+    }
+  }
+}

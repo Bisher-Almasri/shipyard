@@ -78,7 +78,8 @@ export function buildApprovalModal(
 	triggerId: string,
 	channelId: string,
 	messageTs: string,
-	multiplier?: number
+	multiplier?: number,
+	hours?: number
 ) {
 	const blocks: any[] = [
 		{
@@ -90,15 +91,16 @@ export function buildApprovalModal(
 		}
 	];
 
-	// Add multiplier input for final stage
-	if (stage === 'final' && multiplier) {
+	// Add multiplier and hours inputs for final stage
+	if (stage === 'final') {
+		const multiplierValue = multiplier !== undefined && multiplier !== null ? Number(multiplier) : null;
 		blocks.push({
 			type: 'input',
 			block_id: 'multiplier_block',
 			element: {
 				type: 'plain_text_input',
 				action_id: 'multiplier_input',
-				initial_value: String(multiplier),
+				initial_value: multiplierValue !== null ? String(multiplierValue) : '1',
 				placeholder: {
 					type: 'plain_text',
 					text: 'e.g. 1.5'
@@ -107,6 +109,24 @@ export function buildApprovalModal(
 			label: {
 				type: 'plain_text',
 				text: 'Multiplier (can edit if needed)'
+			}
+		});
+		const hoursValue = hours !== undefined && hours !== null ? Number(hours) : null;
+		blocks.push({
+			type: 'input',
+			block_id: 'hours_block',
+			element: {
+				type: 'plain_text_input',
+				action_id: 'hours_input',
+				initial_value: hoursValue !== null ? String(hoursValue) : '0',
+				placeholder: {
+					type: 'plain_text',
+					text: 'e.g. 5'
+				}
+			},
+			label: {
+				type: 'plain_text',
+				text: 'Approved Hours (can override if needed)'
 			}
 		});
 	}
@@ -140,7 +160,7 @@ export function buildApprovalModal(
 				stage,
 				channelId,
 				messageTs,
-				multiplier
+				multiplier: multiplier !== undefined && multiplier !== null ? Number(multiplier) : null
 			}),
 			title: {
 				type: 'plain_text',
@@ -273,7 +293,7 @@ export async function sendSlackMessage(channel: string, text: string, blocks?: a
 		const res = await fetch('https://slack.com/api/chat.postMessage', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json; charset=utf-8',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({
@@ -300,7 +320,7 @@ export async function updateSlackMessage(channel: string, ts: string, text: stri
 		const res = await fetch('https://slack.com/api/chat.update', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json; charset=utf-8',
 					Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`
 			},
 			body: JSON.stringify({

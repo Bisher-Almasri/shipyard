@@ -4,6 +4,13 @@
 
 	let { post, user }: { post: any; user: any } = $props();
 
+	import { marked } from 'marked';
+	import DOMPurify from 'isomorphic-dompurify';
+
+	let parsedDescription = $derived(
+		DOMPurify.sanitize(marked.parse(post.description || '', { async: false }) as string)
+	);
+
 	let expandedComments = $state(false);
 
 	function toggleComments() {
@@ -72,7 +79,9 @@
 
 	<div class="px-5 pb-3">
 		<h3 class="m-0 mb-2 text-base font-bold text-white">{post.title}</h3>
-		<p class="m-0 text-sm leading-relaxed text-white/80">{post.description}</p>
+		<div class="m-0 text-sm leading-relaxed text-white/80 prose prose-invert prose-sm max-w-none prose-p:my-2">
+			{@html parsedDescription}
+		</div>
 
 		{#if post.attachment}
 			<div class="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/20">

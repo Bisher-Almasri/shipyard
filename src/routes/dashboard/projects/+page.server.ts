@@ -40,8 +40,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 						new Date(b.most_recent_heartbeat).getTime() -
 						new Date(a.most_recent_heartbeat).getTime()
 				);
-		} catch (e) {
+		} catch (e: any) {
 			console.error('Failed to fetch hackatime projects:', e);
+			if (e.message?.includes('Unauthorized') || e.message?.includes('401')) {
+				await supabase
+					.from('hackatime_connections')
+					.delete()
+					.eq('user_id', user.id);
+			}
 		}
 	}
 
