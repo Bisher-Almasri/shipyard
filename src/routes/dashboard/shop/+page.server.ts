@@ -3,24 +3,40 @@ import { supabase } from '$lib/supabaseClient';
 import { env as privateEnv } from '$env/dynamic/private';
 import { fail } from '@sveltejs/kit';
 
+type ShopItem = {
+	id: string;
+	name: string;
+	description: string | null;
+	image_url: string | null;
+	cost: number;
+};
+
+type UserRedemption = {
+	id: string;
+	redeemed_at: string;
+	status: string;
+	shop_items: ShopItem | null;
+};
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const { data: shopItems } = await supabase
 		.from('shop_items')
 		.select('*')
 		.order('cost', { ascending: true });
 
-	let userRedemptions = [];
+	const typedShopItems: ShopItem[] = shopItems || [];
+	let userRedemptions: UserRedemption[] = [];
 	if (locals.user) {
 		const { data } = await supabase
 			.from('user_redemptions')
 			.select('*, shop_items(*)')
 			.eq('user_id', locals.user.id)
 			.order('redeemed_at', { ascending: false });
-		userRedemptions = data || [];
+		userRedemptions = (data || []) as UserRedemption[];
 	}
 
 	return {
-		shopItems: shopItems || [],
+		shopItems: typedShopItems,
 		userRedemptions
 	};
 };

@@ -72,6 +72,15 @@ export const actions: Actions = {
 		if (!user) return fail(401);
 
 		const projectId = params.id;
+		const { data: project } = await supabase
+			.from('projects')
+			.select('*, users(hackclub_id, name)')
+			.eq('id', projectId)
+			.eq('user_id', user.id)
+			.single();
+
+		if (!project) return fail(403, { message: 'Project not found or access denied' });
+
 		const formData = await request.formData();
 		const challengeId = formData.get('challengeId') as string;
 		const playable_url = (formData.get('playable_url') as string)?.trim();
@@ -91,15 +100,6 @@ export const actions: Actions = {
 		if (existingCompletion && project.selected_job_id !== challengeId) {
 			return fail(400, { message: 'You have already completed this challenge. Choose a different one.' });
 		}
-
-		const { data: project } = await supabase
-			.from('projects')
-			.select('*, users(hackclub_id, name)')
-			.eq('id', projectId)
-			.eq('user_id', user.id)
-			.single();
-
-		if (!project) return fail(403, { message: 'Project not found or access denied' });
 
 		// Validate all required fields
 		if (!project.title || project.title.trim() === '') {

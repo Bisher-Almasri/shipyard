@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { ShoppingCart, Package, Truck, CheckCircle } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
+	import type { PageProps } from './$types';
 
-	const { data } = $props();
+	let { data }: PageProps = $props();
 
 	let loadingId = $state<string | null>(null);
 

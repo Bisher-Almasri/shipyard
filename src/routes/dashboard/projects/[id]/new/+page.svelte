@@ -2,9 +2,11 @@
 	import { ArrowLeft, FileText, Image as ImageIcon, Upload, Clock } from 'lucide-svelte';
 	import { toast } from '$lib/toast';
 	import { enhance } from '$app/forms';
- 	import type { PageData, ActionData } from './$types';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { PageData, ActionData } from './$types';
 
 	const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
+	const MAX_ENHANCED_IMAGE_BYTES = 480 * 1024;
 	const MAX_DEVLOG_DESCRIPTION_CHARS = 2000;
 
 	let { data, form: actionForm }: { data: PageData; form: ActionData } = $props();
@@ -12,6 +14,90 @@
 
 	let fileName = $state('');
 	let attachmentUrl = $state('');
+
+	async function compressImageFile(file: File): Promise<File> {
+		if (!file.type.startsWith('image/')) {
+			return file;
+		}
+
+		const imageBitmap = await createImageBitmap(file);
+
+		try {
+			const canvas = document.createElement('canvas');
+			const context = canvas.getContext('2d');
+
+			if (!context) {
+				throw new Error('Unable to prepare the screenshot for upload.');
+			}
+
+			const maxDimensions = [1800, 1500, 1280];
+			const qualities = [0.82, 0.72, 0.62];
+
+			for (const maxDimension of maxDimensions) {
+				const scale = Math.min(1, maxDimension / Math.max(imageBitmap.width, imageBitmap.height));
+				canvas.width = Math.max(1, Math.round(imageBitmap.width * scale));
+				canvas.height = Math.max(1, Math.round(imageBitmap.height * scale));
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				context.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+
+				for (const quality of qualities) {
+					const blob = await new Promise<Blob>((resolve, reject) => {
+						canvas.toBlob(
+							(value) => {
+								if (value) {
+									resolve(value);
+									return;
+								}
+
+								reject(new Error('Unable to compress screenshot.'));
+							},
+							'image/webp',
+							quality
+						);
+					});
+
+					if (blob.size <= MAX_ENHANCED_IMAGE_BYTES) {
+						return new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), {
+							type: 'image/webp'
+						});
+					}
+				}
+			}
+
+			throw new Error('This screenshot is still too large after compression. Please use a smaller image or a URL.');
+		} finally {
+			imageBitmap.close();
+		}
+	}
+
+	const enhanceDevlog: SubmitFunction = async ({ formData, cancel }) => {
+		const image = formData.get('image');
+
+		if (!(image instanceof File) || image.size === 0) {
+			return;
+		}
+
+		if (image.size <= MAX_ENHANCED_IMAGE_BYTES) {
+			return;
+		}
+
+		try {
+			const compressedImage = await compressImageFile(image);
+
+			if (compressedImage.size > MAX_ENHANCED_IMAGE_BYTES) {
+				toast.error('This screenshot is still too large. Try a smaller image or paste a screenshot URL.');
+				cancel();
+				return;
+			}
+
+			formData.set('image', compressedImage);
+			fileName = compressedImage.name;
+		} catch (err) {
+			console.error('Failed to compress devlog screenshot:', err);
+			toast.error(err instanceof Error ? err.message : 'Failed to prepare screenshot for upload.');
+			cancel();
+		}
+	};
 
 	function handleFileChange(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -59,7 +145,7 @@
 {/if}
 
 <div class="mx-auto max-w-xl rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-	<form method="POST" use:enhance enctype="multipart/form-data" class="flex flex-col gap-5">
+	<form method="POST" use:enhance={enhanceDevlog} enctype="multipart/form-data" class="flex flex-col gap-5">
 		<div>
 			<label for="post-title" class="mb-1.5 block text-sm font-bold text-white/75">
 				Entry Title <span class="text-red-300">*</span>
