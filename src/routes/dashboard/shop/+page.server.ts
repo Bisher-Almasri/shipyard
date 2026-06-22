@@ -122,8 +122,8 @@ export const actions: Actions = {
 
 		console.log('Attempting to send Slack notification...');
 		const slackChannel = privateEnv.SLACK_SHOP_CHANNEL_ID || privateEnv.SLACK_REVIEW_CHANNEL_ID;
-		console.log('Target Channel:', slackChannel);
-		console.log('Token starts with:', privateEnv.SLACK_BOT_TOKEN?.substring(0, 5));
+		// avoid logging secrets or tokens
+		console.log('Slack channel configured:', !!slackChannel);
 
 		if (privateEnv.SLACK_BOT_TOKEN && slackChannel) {
 			const slackUserHandle = user.hackclub_id ? `<@${user.hackclub_id}>` : `*${user.name}*`;
@@ -170,7 +170,7 @@ export const actions: Actions = {
 				});
 
 				const slackResponse = await res.json();
-				console.log('Slack API Response:', JSON.stringify(slackResponse, null, 2));
+				console.log('Slack API Response ok:', !!slackResponse?.ok);
 
 				if (!slackResponse.ok) {
 					console.error('Slack API Error (Shop):', slackResponse.error);

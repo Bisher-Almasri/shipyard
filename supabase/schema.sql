@@ -77,17 +77,19 @@ ALTER TABLE shop_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_redemptions ENABLE ROW LEVEL SECURITY;
 
 -- 1. Users Table Policies
--- Everyone can view user profiles
-CREATE POLICY "Users are viewable by everyone" ON users FOR SELECT USING (true);
--- Allow insertions (needed for new user creation after OAuth)
-CREATE POLICY "Users can be created" ON users FOR INSERT WITH CHECK (true);
--- Users can update their own profile (OR true temporarily for custom session system)
-CREATE POLICY "Users can update their own profile" ON users FOR UPDATE USING (true);
+-- User profiles stay private; server-side routes use the service-role key.
+CREATE POLICY "Users can view their own profile" ON users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can be created (server or owner)" ON users FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update their own profile" ON users FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can delete their own account" ON users FOR DELETE USING (auth.uid() = id);
 
 -- 2. Sessions Table Policies
 -- Only the owner can view or manage their sessions
-CREATE POLICY "Users can manage their own sessions" ON sessions FOR ALL USING (auth.uid() = user_id OR true);
--- Note: 'OR true' added temporarily to avoid breaking custom session system while using anon key
+-- Prevent client-side creation of sessions: session rows should be managed server-side.
+CREATE POLICY "No client insert into sessions" ON sessions FOR INSERT USING (false) WITH CHECK (false);
+CREATE POLICY "Users can view their own sessions" ON sessions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own sessions" ON sessions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own sessions" ON sessions FOR DELETE USING (auth.uid() = user_id);
 
 -- 3. Jobs Table Policies
 -- Everyone can view jobs
@@ -95,7 +97,9 @@ CREATE POLICY "Jobs are viewable by everyone" ON jobs FOR SELECT USING (true);
 
 -- 4. User Jobs Table Policies
 -- Everyone can view completed jobs
-CREATE POLICY "User jobs are viewable by everyone" ON user_jobs FOR SELECT USING (true);
+CREATE POLICY "User jobs are viewable by owner only" ON user_jobs FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their job completions" ON user_jobs FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own job completions" ON user_jobs FOR DELETE USING (auth.uid() = user_id);
 
 -- 5. Shop Items Table Policies
 -- Everyone can view shop items
@@ -103,7 +107,10 @@ CREATE POLICY "Shop items are viewable by everyone" ON shop_items FOR SELECT USI
 
 -- 6. User Redemptions Table Policies
 -- Everyone can view redemptions
-CREATE POLICY "Redemptions are viewable by everyone" ON user_redemptions FOR SELECT USING (true);
+CREATE POLICY "Users can view their own redemptions" ON user_redemptions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can create a redemption for themselves" ON user_redemptions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own redemptions" ON user_redemptions FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own redemptions" ON user_redemptions FOR DELETE USING (auth.uid() = user_id);
 
 
 create table projects (
@@ -188,26 +195,29 @@ ALTER TABLE post_likes ENABLE ROW LEVEL SECURITY;
 -- 7. Projects Table Policies
 -- Everyone can view projects
 CREATE POLICY "Projects are viewable by everyone" ON projects FOR SELECT USING (true);
--- Only the owner can manage their projects
-CREATE POLICY "Users can manage their own projects" ON projects FOR ALL USING (auth.uid() = user_id OR true);
+CREATE POLICY "Users can create projects for themselves" ON projects FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own projects" ON projects FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own projects" ON projects FOR DELETE USING (auth.uid() = user_id);
 
 -- 8. Posts Table Policies
 -- Everyone can view posts
 CREATE POLICY "Posts are viewable by everyone" ON posts FOR SELECT USING (true);
--- Project owners can manage posts
-CREATE POLICY "Project owners can manage posts" ON posts FOR ALL USING (true);
+CREATE POLICY "Project owners can create posts" ON posts FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM projects p WHERE p.id = posts.project_id AND p.user_id = auth.uid()));
+CREATE POLICY "Project owners can update/delete posts" ON posts FOR UPDATE USING (EXISTS (SELECT 1 FROM projects p WHERE p.id = posts.project_id AND p.user_id = auth.uid())) WITH CHECK (EXISTS (SELECT 1 FROM projects p WHERE p.id = posts.project_id AND p.user_id = auth.uid()));
+CREATE POLICY "Project owners can delete posts" ON posts FOR DELETE USING (EXISTS (SELECT 1 FROM projects p WHERE p.id = posts.project_id AND p.user_id = auth.uid()));
 
 -- 9. Comments Table Policies
 -- Everyone can view comments
 CREATE POLICY "Comments are viewable by everyone" ON comments FOR SELECT USING (true);
--- Users can manage their own comments
-CREATE POLICY "Users can manage their own comments" ON comments FOR ALL USING (auth.uid() = user_id OR true);
+CREATE POLICY "Users can create their own comments" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own comments" ON comments FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own comments" ON comments FOR DELETE USING (auth.uid() = user_id);
 
 -- 10. Likes Table Policies
 -- Everyone can view likes
 CREATE POLICY "Likes are viewable by everyone" ON post_likes FOR SELECT USING (true);
--- Users can manage their own likes
-CREATE POLICY "Users can manage their own likes" ON post_likes FOR ALL USING (auth.uid() = user_id OR true);
+CREATE POLICY "Users can like/unlike" ON post_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can remove their like" ON post_likes FOR DELETE USING (auth.uid() = user_id);
 
 
 -- Hackatime Connections
@@ -222,5 +232,8 @@ ALTER TABLE hackatime_connections ENABLE ROW LEVEL SECURITY;
 
 -- 9. Hackatime Connections Table Policies
 -- Only the user can view/manage their connection data
-CREATE POLICY "Users can manage their own Hackatime connections" ON hackatime_connections FOR ALL USING (auth.uid() = user_id OR true);
+CREATE POLICY "Users can manage their own Hackatime connections (select)" ON hackatime_connections FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can create their own Hackatime connection" ON hackatime_connections FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own Hackatime connection" ON hackatime_connections FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own Hackatime connection" ON hackatime_connections FOR DELETE USING (auth.uid() = user_id);
 

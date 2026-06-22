@@ -47,11 +47,11 @@ ALTER TABLE hackatime_connections ENABLE ROW LEVEL SECURITY;
 -- USERS
 -- =========================================
 
--- Public read only
+-- Keep user rows private; server routes use the service-role key and bypass RLS.
 CREATE POLICY users_select
 ON users
 FOR SELECT
-USING (true);
+USING (auth.uid() = id);
 
 -- Users update themselves only
 CREATE POLICY users_update_own

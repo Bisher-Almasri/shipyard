@@ -84,7 +84,6 @@ export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
 
 		let user = await apiRes.json();
 		user = user.identity;
-		console.log('Hack Club API User Response:', user);
 
 		const hackclubId = user.slack_id || user.id || Object.values(user)[0]?.toString() || '';
 		const name = user.first_name + ' ' + user.last_name || 'Unknown Hacker';

@@ -12,7 +12,12 @@ import {
 function verifySlackSignature(request: Request, rawBody: string): boolean {
 	const signingSecret = env.SLACK_SIGNING_SECRET;
 	if (!signingSecret) {
-		console.warn('[slack:interactivity] SLACK_SIGNING_SECRET is not set; skipping signature check');
+		const isProd = process.env.NODE_ENV === 'production';
+		if (isProd) {
+			console.error('[slack:interactivity] SLACK_SIGNING_SECRET is not set in production; rejecting request');
+			return false;
+		}
+		console.warn('[slack:interactivity] SLACK_SIGNING_SECRET is not set; skipping signature check (non-production)');
 		return true;
 	}
 
